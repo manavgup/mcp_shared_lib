@@ -1,0 +1,48 @@
+# MCP Shared Library Default Configuration
+
+# Logging configuration
+logging:
+  level: INFO
+  format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  file: logs/mcp_shared_lib.log
+  max_size: 10485760  # 10 MB
+  backup_count: 5
+
+# Telemetry configuration
+telemetry:
+  enabled: true
+  sample_rate: 0.1
+  metrics_endpoint: ""
+
+# Error handling configuration
+error:
+  max_retries: 3
+  retry_delay: 1.0
+  exponential_backoff: true
+  silence_warnings: false
+
+# State management configuration
+state:
+  persist: true
+  storage_path: .state
+  ttl: 86400  # 24 hours in seconds
+
+# Tools configuration
+tools:
+  file_grouper:
+    max_files_per_group: 10
+    similarity_threshold: 0.7
+  batch_processor:
+    batch_size: 5
+    max_workers: 4
+  git_operations:
+    timeout: 60
+    fetch_depth: 1
+  directory_analyzer:
+    max_depth: 5
+    exclude_patterns: [".git", "__pycache__", "node_modules", "venv"]
+
+# Model configurations
+models:
+  default_chunk_size: 1000
+  default_overlap: 200
