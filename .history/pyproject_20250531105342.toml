@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Shared library for MCP (Model Context Protocol) components"
 authors = ["Manav Gupta <manavg@gmail.com>"]
 readme = "README.md"
-packages = [{ include = "mcp_shared_lib", from = "src" }]
+packages = [{ include = "src" }]
 
 [tool.poetry.dependencies]
 python = ">=3.9"

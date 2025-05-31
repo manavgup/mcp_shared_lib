@@ -1,10 +1,20 @@
 [tool.poetry]
-name = "mcp_shared_lib"
+name = "mcp-shared-lib"
 version = "0.1.0"
 description = "Shared library for MCP (Model Context Protocol) components"
 authors = ["Manav Gupta <manavg@gmail.com>"]
 readme = "README.md"
-packages = [{ include = "mcp_shared_lib", from = "src" }]
+packages = [
+    { include = "tools", from = "src", to = "mcp_shared_lib" },
+    { include = "models", from = "src", to = "mcp_shared_lib" },
+    { include = "utils", from = "src", to = "mcp_shared_lib" },
+    { include = "config", from = "src", to = "mcp_shared_lib" },
+    { include = "error", from = "src", to = "mcp_shared_lib" },
+    { include = "lib", from = "src", to = "mcp_shared_lib" },
+    { include = "state", from = "src", to = "mcp_shared_lib" },
+    { include = "telemetry", from = "src", to = "mcp_shared_lib" },
+    { include = "a2a", from = "src", to = "mcp_shared_lib" },
+]
 
 [tool.poetry.dependencies]
 python = ">=3.9"
