@@ -1,301 +1,260 @@
+"""Utility functions for git operations and analysis.
+
+Copyright 2025
+SPDX-License-Identifier: Apache-2.0
+Author: Manav Gupta <manavg@gmail.com>
+
+This module provides utility functions for git repository detection,
+URL parsing, file size formatting, commit message formatting, safe filename
+generation, diff stats parsing, text truncation, path normalization, file
+extension extraction, and binary file detection.
 """
-Utility functions for git operations.
-"""
-import os
-import subprocess
+
+import re
 from pathlib import Path
-from typing import List, Dict, Any, Optional, Tuple, Set, Union
 
-from mcp_shared_lib.src.utils.logging_utils import get_logger
-from .file_utils import normalize_path
 
-logger = get_logger(__name__)
+def is_git_repository(path: str | Path) -> bool:
+    """Check if the given path is a git repository.
 
-def is_git_repo(path: Union[str, Path]) -> bool:
-    """
-    Check if the specified path is a git repository.
-    
     Args:
-        path: Path to check
-        
-    Returns:
-        True if the path is a git repository, False otherwise
-    """
-    path = normalize_path(path)
-    
-    try:
-        result = subprocess.run(
-            ["git", "-C", str(path), "rev-parse", "--is-inside-work-tree"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            check=False
-        )
-        return result.returncode == 0 and result.stdout.strip() == "true"
-    except Exception as e:
-        logger.error(f"Error checking if {path} is a git repository: {e}")
-        return False
+        path: Path to check.
 
-def get_git_root(path: Union[str, Path]) -> Optional[Path]:
-    """
-    Get the root directory of a git repository.
-    
-    Args:
-        path: Path within a git repository
-        
     Returns:
-        The root directory of the git repository, or None if not a git repository
+        True if the path is a git repository, False otherwise.
     """
-    path = normalize_path(path)
-    
-    try:
-        result = subprocess.run(
-            ["git", "-C", str(path), "rev-parse", "--show-toplevel"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            check=False
-        )
-        
-        if result.returncode == 0:
-            return Path(result.stdout.strip())
-        return None
-    except Exception as e:
-        logger.error(f"Error getting git root for {path}: {e}")
-        return None
+    path = Path(path)
+    return (path / ".git").exists()
 
-def get_current_branch(repo_path: Union[str, Path]) -> Optional[str]:
-    """
-    Get the current git branch.
-    
-    Args:
-        repo_path: Path to the git repository
-        
-    Returns:
-        The current branch name, or None if not a git repository or an error occurs
-    """
-    repo_path = normalize_path(repo_path)
-    
-    try:
-        result = subprocess.run(
-            ["git", "-C", str(repo_path), "rev-parse", "--abbrev-ref", "HEAD"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            check=False
-        )
-        
-        if result.returncode == 0:
-            return result.stdout.strip()
-        return None
-    except Exception as e:
-        logger.error(f"Error getting current branch for {repo_path}: {e}")
-        return None
 
-def get_changed_files(repo_path: Union[str, Path], base_ref: str = "HEAD") -> List[str]:
-    """
-    Get a list of files changed in the current branch compared to the base reference.
-    
-    Args:
-        repo_path: Path to the git repository
-        base_ref: Base reference to compare with (default: HEAD)
-        
-    Returns:
-        List of changed file paths relative to the repository root
-    """
-    repo_path = normalize_path(repo_path)
-    
-    try:
-        result = subprocess.run(
-            ["git", "-C", str(repo_path), "diff", "--name-only", base_ref],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            check=False
-        )
-        
-        if result.returncode == 0:
-            return [line.strip() for line in result.stdout.splitlines() if line.strip()]
-        return []
-    except Exception as e:
-        logger.error(f"Error getting changed files for {repo_path}: {e}")
-        return []
+def find_git_root(path: str | Path) -> Path | None:
+    """Find the root of the git repository containing the given path.
 
-def get_file_diff(repo_path: Union[str, Path], file_path: Union[str, Path], base_ref: str = "HEAD") -> str:
-    """
-    Get the diff for a specific file.
-    
     Args:
-        repo_path: Path to the git repository
-        file_path: Path to the file (relative to the repository root)
-        base_ref: Base reference to compare with (default: HEAD)
-        
-    Returns:
-        The diff content as a string
-    """
-    repo_path = normalize_path(repo_path)
-    
-    try:
-        result = subprocess.run(
-            ["git", "-C", str(repo_path), "diff", base_ref, "--", str(file_path)],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            check=False
-        )
-        
-        if result.returncode == 0:
-            return result.stdout
-        return ""
-    except Exception as e:
-        logger.error(f"Error getting diff for {file_path} in {repo_path}: {e}")
-        return ""
+        path: Path inside the git repository.
 
-def get_commit_history(repo_path: Union[str, Path], max_count: int = 10) -> List[Dict[str, str]]:
-    """
-    Get the commit history for a repository.
-    
-    Args:
-        repo_path: Path to the git repository
-        max_count: Maximum number of commits to retrieve
-        
     Returns:
-        List of commit dictionaries with 'hash', 'author', 'date', and 'message' keys
+        Path to the git root directory or None if not found.
     """
-    repo_path = normalize_path(repo_path)
-    
-    try:
-        result = subprocess.run(
-            [
-                "git", "-C", str(repo_path), "log", 
-                f"--max-count={max_count}", 
-                "--format=%H|%an|%ad|%s"
-            ],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            check=False
-        )
-        
-        if result.returncode == 0:
-            commits = []
-            for line in result.stdout.splitlines():
-                if not line.strip():
-                    continue
-                
-                parts = line.split("|", 3)
-                if len(parts) == 4:
-                    commits.append({
-                        "hash": parts[0],
-                        "author": parts[1],
-                        "date": parts[2],
-                        "message": parts[3]
-                    })
-            
-            return commits
-        return []
-    except Exception as e:
-        logger.error(f"Error getting commit history for {repo_path}: {e}")
-        return []
+    path = Path(path).resolve()
 
-def create_branch(repo_path: Union[str, Path], branch_name: str) -> bool:
-    """
-    Create a new git branch.
-    
-    Args:
-        repo_path: Path to the git repository
-        branch_name: Name of the branch to create
-        
-    Returns:
-        True if the branch was created successfully, False otherwise
-    """
-    repo_path = normalize_path(repo_path)
-    
-    try:
-        result = subprocess.run(
-            ["git", "-C", str(repo_path), "checkout", "-b", branch_name],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            check=False
-        )
-        
-        return result.returncode == 0
-    except Exception as e:
-        logger.error(f"Error creating branch {branch_name} in {repo_path}: {e}")
-        return False
+    for parent in [path] + list(path.parents):
+        if is_git_repository(parent):
+            return parent
 
-def checkout_branch(repo_path: Union[str, Path], branch_name: str) -> bool:
-    """
-    Checkout an existing git branch.
-    
-    Args:
-        repo_path: Path to the git repository
-        branch_name: Name of the branch to checkout
-        
-    Returns:
-        True if the branch was checked out successfully, False otherwise
-    """
-    repo_path = normalize_path(repo_path)
-    
-    try:
-        result = subprocess.run(
-            ["git", "-C", str(repo_path), "checkout", branch_name],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            check=False
-        )
-        
-        return result.returncode == 0
-    except Exception as e:
-        logger.error(f"Error checking out branch {branch_name} in {repo_path}: {e}")
-        return False
+    return None
 
-def commit_changes(repo_path: Union[str, Path], message: str, files: Optional[List[Union[str, Path]]] = None) -> bool:
-    """
-    Commit changes to git.
-    
+
+def parse_git_url(url: str) -> dict[str, str]:
+    """Parse a git URL into components.
+
     Args:
-        repo_path: Path to the git repository
-        message: Commit message
-        files: Optional list of files to commit (if None, all changes will be committed)
-        
+        url: Git repository URL.
+
     Returns:
-        True if the changes were committed successfully, False otherwise
+        Dictionary with protocol, host, owner, and repo keys.
     """
-    repo_path = normalize_path(repo_path)
-    
-    try:
-        # Add files
-        add_cmd = ["git", "-C", str(repo_path), "add"]
-        if files:
-            add_cmd.extend([str(f) for f in files])
-        else:
-            add_cmd.append(".")
-            
-        add_result = subprocess.run(
-            add_cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            check=False
-        )
-        
-        if add_result.returncode != 0:
-            logger.error(f"Error adding files in {repo_path}: {add_result.stderr}")
-            return False
-            
-        # Commit changes
-        commit_result = subprocess.run(
-            ["git", "-C", str(repo_path), "commit", "-m", message],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            check=False
-        )
-        
-        return commit_result.returncode == 0
-    except Exception as e:
-        logger.error(f"Error committing changes in {repo_path}: {e}")
-        return False
+    # Handle SSH URLs like git@github.com:user/repo.git
+    ssh_pattern = r"git@([^:]+):([^/]+)/(.+?)(?:\.git)?$"
+    ssh_match = re.match(ssh_pattern, url)
+
+    if ssh_match:
+        return {"protocol": "ssh", "host": ssh_match.group(1), "owner": ssh_match.group(2), "repo": ssh_match.group(3)}
+
+    # Handle HTTPS URLs like https://github.com/user/repo.git
+    https_pattern = r"https://([^/]+)/([^/]+)/(.+?)(?:\.git)?$"
+    https_match = re.match(https_pattern, url)
+
+    if https_match:
+        return {
+            "protocol": "https",
+            "host": https_match.group(1),
+            "owner": https_match.group(2),
+            "repo": https_match.group(3),
+        }
+
+    return {"protocol": "unknown", "host": "", "owner": "", "repo": ""}
+
+
+def format_file_size(size_bytes: int) -> str:
+    """Format file size in human readable format.
+
+    Args:
+        size_bytes: File size in bytes.
+
+    Returns:
+        Human-readable file size string.
+    """
+    if size_bytes == 0:
+        return "0 B"
+
+    size_names = ["B", "KB", "MB", "GB"]
+    size_index = 0
+    size = float(size_bytes)
+
+    while size >= 1024 and size_index < len(size_names) - 1:
+        size /= 1024
+        size_index += 1
+
+    return f"{size:.1f} {size_names[size_index]}"
+
+
+def format_commit_message(message: str, max_length: int = 72) -> str:
+    """Format commit message for display.
+
+    Args:
+        message: Commit message string.
+        max_length: Maximum length of the formatted message.
+
+    Returns:
+        Formatted commit message string.
+    """
+    lines = message.split("\n")
+    first_line = lines[0]
+
+    if len(first_line) <= max_length:
+        return first_line
+
+    return first_line[: max_length - 3] + "..."
+
+
+def safe_filename(filename: str) -> str:
+    """Convert a string to a safe filename.
+
+    Args:
+        filename: Original filename string.
+
+    Returns:
+        Safe filename string.
+    """
+    # Remove or replace unsafe characters
+    safe = re.sub(r'[<>:"/\\|?*]', "_", filename)
+    # Remove leading/trailing dots and spaces
+    safe = safe.strip(". ")
+    # Limit length
+    if len(safe) > 255:
+        safe = safe[:255]
+
+    return safe or "unnamed"
+
+
+def parse_diff_stats(stats_line: str) -> tuple[int, int]:
+    """Parse diff stats line like '5 files changed, 123 insertions(+), 45 deletions(-)'.
+
+    Args:
+        stats_line: Diff stats line string.
+
+    Returns:
+        Tuple of (insertions, deletions).
+    """
+    insertions = 0
+    deletions = 0
+
+    # Extract insertions
+    insertion_match = re.search(r"(\d+) insertion", stats_line)
+    if insertion_match:
+        insertions = int(insertion_match.group(1))
+
+    # Extract deletions
+    deletion_match = re.search(r"(\d+) deletion", stats_line)
+    if deletion_match:
+        deletions = int(deletion_match.group(1))
+
+    return insertions, deletions
+
+
+def truncate_text(text: str, max_length: int, suffix: str = "...") -> str:
+    """Truncate text to maximum length with suffix.
+
+    Args:
+        text: Original text string.
+        max_length: Maximum length of truncated text.
+        suffix: Suffix to append if truncated.
+
+    Returns:
+        Truncated text string.
+    """
+    if len(text) <= max_length:
+        return text
+
+    return text[: max_length - len(suffix)] + suffix
+
+
+def normalize_path(path: str | Path) -> str:
+    """Normalize a file path for comparison.
+
+    Args:
+        path: File path string or Path object.
+
+    Returns:
+        Normalized POSIX-style path string.
+    """
+    return str(Path(path).as_posix())
+
+
+def get_file_extension(filename: str) -> str:
+    """Get file extension from filename.
+
+    Args:
+        filename: Filename string.
+
+    Returns:
+        Lowercase file extension string.
+    """
+    return Path(filename).suffix.lower()
+
+
+def is_binary_file(file_path: str | Path) -> bool:
+    """Check if a file is likely binary based on extension.
+
+    Args:
+        file_path: File path string or Path object.
+
+    Returns:
+        True if file is binary, False otherwise.
+    """
+    binary_extensions = {
+        ".exe",
+        ".dll",
+        ".so",
+        ".dylib",
+        ".bin",
+        ".obj",
+        ".o",
+        ".a",
+        ".lib",
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".gif",
+        ".bmp",
+        ".ico",
+        ".svg",
+        ".tiff",
+        ".mp3",
+        ".mp4",
+        ".avi",
+        ".mov",
+        ".wav",
+        ".flac",
+        ".ogg",
+        ".pdf",
+        ".doc",
+        ".docx",
+        ".xls",
+        ".xlsx",
+        ".ppt",
+        ".pptx",
+        ".zip",
+        ".tar",
+        ".gz",
+        ".bz2",
+        ".7z",
+        ".rar",
+        ".sqlite",
+        ".db",
+        ".mdb",
+    }
+
+    extension = get_file_extension(str(file_path))
+    return extension in binary_extensions

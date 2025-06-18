@@ -1,11 +1,11 @@
 # Contains models directly related to Git operations
 import uuid
 from pathlib import Path
-from typing import Optional, Dict, List
+from typing import Dict, List, Optional
 
 from pydantic import Field, computed_field
 
-from .base_models import BaseModel, ConfigDict, FileType, FileStatusType
+from .base_models import BaseModel, ConfigDict, FileStatusType, FileType
 
 
 class LineChanges(BaseModel):

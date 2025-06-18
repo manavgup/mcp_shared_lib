@@ -1,74 +1,94 @@
 # MCP Shared Library
 
-A shared library for MCP (Model Context Protocol) components, providing common utilities, models, and tools used across the MCP ecosystem including PR Recommender and Change Analyzer.
+Shared models and services for MCP (Model Context Protocol) components.
 
 ## Overview
 
-This library contains shared code and utilities that are used by multiple MCP components:
-
-- Common data models
-- Shared tools and utilities
-- Error handling mechanisms
-- Telemetry functionality
-- State management
-- Configuration loading
-
-## Directory Structure
-
-- `src/`: Source code
-  - `models/`: Data models
-  - `tools/`: Tool implementations
-  - `utils/`: Utility functions
-  - `config/`: Configuration handling
-  - `error/`: Error handling
-  - `state/`: State management
-  - `telemetry/`: Telemetry and monitoring
-- `tests/`: Test files
-- `docs/`: Documentation
-- `config/`: Configuration files
+This library provides common data models, services, and utilities used by:
+- `mcp_local_repo_analyzer` - Git repository analysis tools
+- `mcp_pr_recommender` - PR recommendation engine
 
 ## Installation
 
 ```bash
-pip install -e .
+cd mcp_shared_lib
+poetry install
 ```
 
 ## Usage
 
+### Models
+
 ```python
-# Example importing models
-from mcp_shared_lib.models.base_models import BaseModel
-from mcp_shared_lib.models.git_models import GitCommit
+from mcp_shared_lib.models import FileStatus, WorkingDirectoryChanges, RiskAssessment
 
-# Example importing tools
-from mcp_shared_lib.tools.base_tool import BaseTool
-from mcp_shared_lib.tools.file_grouper_tool import FileGrouperTool
+# Create a file status
+file_status = FileStatus(
+    path="src/main.py",
+    status_code="M",
+    lines_added=10,
+    lines_deleted=5
+)
+```
 
-# Example importing utilities
-from mcp_shared_lib.utils.file_utils import read_file, write_file
-from mcp_shared_lib.utils.git_utils import get_repo_root
+### Services
+
+```python
+from mcp_shared_lib.services import GitClient, ChangeDetector
+from mcp_shared_lib.config import GitAnalyzerSettings
+
+# Setup services
+settings = GitAnalyzerSettings()
+git_client = GitClient(settings)
+change_detector = ChangeDetector(git_client)
+
+# Use services
+repo = LocalRepository(path=".", name="my-repo", current_branch="main", head_commit="abc123")
+changes = await change_detector.detect_working_directory_changes(repo)
+```
+
+## Architecture
+
+```
+mcp_shared_lib/
+├── models/          # Data models
+│   ├── git/         # Git-related models
+│   ├── analysis/    # Analysis models
+│   ├── pr/          # PR models (Phase 2)
+│   └── base/        # Base classes
+├── services/        # Business logic services
+│   ├── git/         # Git services
+│   └── pr/          # PR services (Phase 2)
+├── tools/           # Tool base classes
+├── utils/           # Utility functions
+└── config/          # Configuration management
 ```
 
 ## Development
 
-### Setup
+### Running Tests
 
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd mcp_shared_lib
-
-# Install development dependencies
-pip install -e ".[dev]"
+poetry run pytest
 ```
 
-### Testing
+### Code Formatting
 
 ```bash
-# Run tests
-pytest
+poetry run black .
+poetry run isort .
 ```
 
-## License
+### Type Checking
 
-[Specify license information]
+```bash
+poetry run mypy .
+```
+
+## Migration Status
+
+- ✅ Phase 1: Foundation setup (models from mcp_local_repo_analyzer)
+- ⏳ Phase 2: PR models migration (from mcp_pr_recommender)
+- ⏳ Phase 3: Service migration
+- ⏳ Phase 4: Repository updates
+- ⏳ Phase 5: Testing & cleanup

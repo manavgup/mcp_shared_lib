@@ -1,5 +1,5 @@
-"""
-MCP Shared Library Tools
+"""Base tool functionality for MCP components."""
 
-Contains tool implementations used across MCP components.
-"""
+from mcp_shared_lib.tools.base import BaseMCPTool
+
+__all__ = ["BaseMCPTool"]

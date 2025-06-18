@@ -1,59 +1,39 @@
-"""
-Utility functions and helpers for the MCP project.
-"""
-from .file_utils import (
+"""Utility functions for MCP components."""
+
+# File utilities
+from mcp_shared_lib.utils.file_utils import get_file_extension, is_binary_file
+
+# Git utilities
+from mcp_shared_lib.utils.git_utils import (
+    find_git_root,
+    format_commit_message,
+    format_file_size,
+    is_git_repository,
     normalize_path,
-    get_relative_path,
-    get_file_extension,
-    get_directory,
-    filter_files_by_extension,
-    group_files_by_directory,
-    find_common_parent_directory
+    parse_diff_stats,
+    parse_git_url,
+    safe_filename,
+    truncate_text,
 )
 
-from .git_utils import (
-    is_git_repo,
-    get_git_root,
-    get_current_branch,
-    get_changed_files,
-    get_file_diff,
-    get_commit_history,
-    create_branch,
-    checkout_branch,
-    commit_changes
-)
-
-from .logging_utils import (
-    configure_logger,
-    get_logger,
-    ProgressTracker,
-    log_execution_time
-)
+# Logging utilities
+from mcp_shared_lib.utils.logging_utils import get_logger, setup_logging
 
 __all__ = [
     # File utils
-    'normalize_path',
-    'get_relative_path',
-    'get_file_extension',
-    'get_directory',
-    'filter_files_by_extension',
-    'group_files_by_directory',
-    'find_common_parent_directory',
-    
+    "get_file_extension",
+    "is_binary_file",
     # Git utils
-    'is_git_repo',
-    'get_git_root',
-    'get_current_branch',
-    'get_changed_files',
-    'get_file_diff',
-    'get_commit_history',
-    'create_branch',
-    'checkout_branch',
-    'commit_changes',
-    
+    "is_git_repository",
+    "find_git_root",
+    "parse_git_url",
+    "format_file_size",
+    "format_commit_message",
+    "safe_filename",
+    "parse_diff_stats",
+    "truncate_text",
+    "normalize_path",
     # Logging utils
-    'configure_logger',
-    'get_logger',
-    'ProgressTracker',
-    'log_execution_time'
+    "setup_logging",
+    "get_logger",
 ]
