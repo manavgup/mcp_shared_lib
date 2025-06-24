@@ -2,13 +2,12 @@
 
 import asyncio
 import json
-import logging
 from pathlib import Path
 from typing import Any
 
 from fastmcp.server.dependencies import get_context
-
 from mcp_shared_lib.config.git_analyzer import GitAnalyzerSettings
+from mcp_shared_lib.utils import logging_service
 
 
 class GitCommandError(Exception):
@@ -26,7 +25,7 @@ class GitClient:
 
     def __init__(self, settings: GitAnalyzerSettings):
         self.settings = settings
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging_service.get_logger(__name__)
 
     def _get_context(self):
         """Get FastMCP context if available."""

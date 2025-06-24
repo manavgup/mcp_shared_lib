@@ -1,15 +1,15 @@
 """Base tool functionality for FastMCP tools."""
 
-import logging
 from abc import ABC, abstractmethod
 from typing import Any, Dict
+from mcp_shared_lib.utils import logging_service
 
 
 class BaseMCPTool(ABC):
     """Base class for MCP tools with common functionality."""
 
     def __init__(self):
-        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger = logging_service.get_logger(self.__class__.__name__)
 
     @abstractmethod
     async def execute(self, **kwargs) -> Dict[str, Any]:
