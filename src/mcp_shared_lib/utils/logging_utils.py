@@ -6,12 +6,13 @@ SPDX-License-Identifier: Apache-2.0
 Authors: Manav Gupta
 
 This module implements structured logging according to the MCP specification.
-It supports RFC 5424 severity levels, log level management, and log event subscriptions.
+It supports RFC 5424 severity levels, log level management, and log event
+subscriptions.
 """
 
 import asyncio
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, AsyncGenerator, Dict, List, Optional
 
 from mcp_shared_lib.models.base.types import LogLevel
@@ -84,9 +85,13 @@ class LoggingService:
         for logger in self._loggers.values():
             logger.setLevel(log_level)
 
-        await self.notify(f"Log level set to {level}", LogLevel.INFO, "logging")
+        await self.notify(
+            f"Log level set to {level}", LogLevel.INFO, "logging"
+        )
 
-    async def notify(self, data: Any, level: LogLevel, logger_name: Optional[str] = None) -> None:
+    async def notify(
+        self, data: Any, level: LogLevel, logger_name: Optional[str] = None
+    ) -> None:
         """Send log notification to subscribers.
 
         Args:
@@ -104,7 +109,7 @@ class LoggingService:
             "data": {
                 "level": level,
                 "data": data,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             },
         }
         if logger_name:
