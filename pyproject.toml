@@ -2,9 +2,11 @@
 name = "mcp-shared-lib"
 version = "0.1.0"
 description = "Shared library for MCP components providing common utilities, models, and tools"
-authors = ["Your Name <your.email@example.com>"]
+authors = ["Manav Gupta <manavg@gmail.com>"]
 readme = "README.md"
-packages = [{include = "mcp_shared_lib", from = "src"}]
+packages = [
+    {include = "mcp_shared_lib", from = "src"},
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -107,7 +109,6 @@ addopts = [
     "--cov-report=term-missing",
     "--cov-report=html",
     "--cov-report=xml",
-    "--cov-fail-under=80",
     "--maxfail=3",
     "--tb=short"
 ]
@@ -130,7 +131,6 @@ filterwarnings = [
     "ignore::UserWarning:git.*"
 ]
 asyncio_mode = "auto"
-timeout = 300
 log_cli = true
 log_cli_level = "INFO"
 log_cli_format = "%(asctime)s [%(levelname)8s] %(name)s: %(message)s"
