@@ -3,11 +3,13 @@
 import asyncio
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, TYPE_CHECKING, Optional
 
-from fastmcp.server.dependencies import get_context
 from mcp_shared_lib.config.git_analyzer import GitAnalyzerSettings
 from mcp_shared_lib.utils import logging_service
+
+if TYPE_CHECKING:
+    from fastmcp import Context
 
 
 class GitCommandError(Exception):
@@ -27,17 +29,8 @@ class GitClient:
         self.settings = settings
         self.logger = logging_service.get_logger(__name__)
 
-    def _get_context(self):
-        """Get FastMCP context if available."""
-        try:
-            return get_context()
-        except RuntimeError:
-            # No context available (e.g., during testing)
-            return None
-
-    async def execute_command(self, repo_path: Path, command: list[str], check: bool = True) -> str:
+    async def execute_command(self, repo_path: Path, command: list[str], check: bool = True, ctx: Optional["Context"] = None) -> str:
         """Execute a git command in the given repository."""
-        ctx = self._get_context()
         full_command = ["git", "-C", str(repo_path)] + command
 
         if ctx:
@@ -72,15 +65,13 @@ class GitClient:
                 await ctx.error(f"Unexpected error executing git command: {str(e)}")
             raise
 
-    async def get_status(self, repo_path: Path) -> dict[str, Any]:
+    async def get_status(self, repo_path: Path, ctx: Optional["Context"] = None) -> dict[str, Any]:
         """Get git status information."""
-        ctx = self._get_context()
-
         if ctx:
             await ctx.debug("Getting git status (porcelain format)")
 
         # Get porcelain status for parsing
-        status_output = await self.execute_command(repo_path, ["status", "--porcelain=v1"])
+        status_output = await self.execute_command(repo_path, ["status", "--porcelain=v1"], ctx=ctx)
 
         files = []
         for line in status_output.split("\n"):
@@ -103,10 +94,8 @@ class GitClient:
 
         return {"files": files}
 
-    async def get_diff(self, repo_path: Path, staged: bool = False, file_path: str | None = None) -> str:
+    async def get_diff(self, repo_path: Path, staged: bool = False, file_path: Optional[str] = None, ctx: Optional["Context"] = None) -> str:
         """Get diff output."""
-        ctx = self._get_context()
-
         command = ["diff"]
         if staged:
             command.append("--cached")
@@ -118,7 +107,7 @@ class GitClient:
             target = f" for {file_path}" if file_path else ""
             await ctx.debug(f"Getting {diff_type} diff{target}")
 
-        diff_output = await self.execute_command(repo_path, command)
+        diff_output = await self.execute_command(repo_path, command, ctx=ctx)
 
         if ctx:
             lines_count = len(diff_output.split("\n")) if diff_output else 0
@@ -126,16 +115,14 @@ class GitClient:
 
         return diff_output
 
-    async def get_unpushed_commits(self, repo_path: Path, remote: str = "origin") -> list[dict[str, Any]]:
+    async def get_unpushed_commits(self, repo_path: Path, remote: str = "origin", ctx: Optional["Context"] = None) -> list[dict[str, Any]]:
         """Get commits that haven't been pushed to remote."""
-        ctx = self._get_context()
-
         if ctx:
             await ctx.debug(f"Getting unpushed commits for remote '{remote}'")
 
         try:
             # Get current branch
-            current_branch = await self.execute_command(repo_path, ["branch", "--show-current"])
+            current_branch = await self.execute_command(repo_path, ["branch", "--show-current"], ctx=ctx)
 
             if ctx:
                 await ctx.debug(f"Current branch: {current_branch}")
@@ -148,13 +135,13 @@ class GitClient:
                 if ctx:
                     await ctx.debug(f"Checking for commits ahead of {upstream}")
 
-                output = await self.execute_command(repo_path, ["log", f"{upstream}..HEAD", log_format])
+                output = await self.execute_command(repo_path, ["log", f"{upstream}..HEAD", log_format], ctx=ctx)
             except GitCommandError:
                 # If upstream doesn't exist, get all commits (limited)
                 if ctx:
                     await ctx.warning(f"Upstream {upstream} not found, getting recent commits")
 
-                output = await self.execute_command(repo_path, ["log", log_format, "--max-count=10"])
+                output = await self.execute_command(repo_path, ["log", log_format, "--max-count=10"], ctx=ctx)
 
             commits = []
             for line in output.split("\n"):
@@ -177,15 +164,13 @@ class GitClient:
                 await ctx.warning(f"Failed to get unpushed commits: {e}")
             return []
 
-    async def get_stash_list(self, repo_path: Path) -> list[dict[str, Any]]:
+    async def get_stash_list(self, repo_path: Path, ctx: Optional["Context"] = None) -> list[dict[str, Any]]:
         """Get list of stashed changes."""
-        ctx = self._get_context()
-
         if ctx:
             await ctx.debug("Getting git stash list")
 
         try:
-            output = await self.execute_command(repo_path, ["stash", "list", "--pretty=format:%gd|%s|%cr"])
+            output = await self.execute_command(repo_path, ["stash", "list", "--pretty=format:%gd|%s|%cr"], ctx=ctx)
 
             stashes = []
             for i, line in enumerate(output.split("\n")):
@@ -211,16 +196,14 @@ class GitClient:
                 await ctx.warning(f"Failed to get stash list: {e}")
             return []
 
-    async def get_branch_info(self, repo_path: Path) -> dict[str, Any]:
+    async def get_branch_info(self, repo_path: Path, ctx: Optional["Context"] = None) -> dict[str, Any]:
         """Get branch information."""
-        ctx = self._get_context()
-
         if ctx:
             await ctx.debug("Getting branch information")
 
         try:
             # Get current branch
-            current_branch = await self.execute_command(repo_path, ["branch", "--show-current"])
+            current_branch = await self.execute_command(repo_path, ["branch", "--show-current"], ctx=ctx)
 
             if ctx:
                 await ctx.debug(f"Current branch: {current_branch}")
@@ -228,7 +211,7 @@ class GitClient:
             # Get upstream info
             upstream = None
             try:
-                upstream = await self.execute_command(repo_path, ["rev-parse", "--abbrev-ref", "@{upstream}"])
+                upstream = await self.execute_command(repo_path, ["rev-parse", "--abbrev-ref", "@{upstream}"], ctx=ctx)
                 if ctx:
                     await ctx.debug(f"Upstream branch: {upstream}")
             except GitCommandError:
@@ -240,7 +223,7 @@ class GitClient:
             if upstream:
                 try:
                     counts = await self.execute_command(
-                        repo_path, ["rev-list", "--left-right", "--count", f"{upstream}...HEAD"]
+                        repo_path, ["rev-list", "--left-right", "--count", f"{upstream}...HEAD"], ctx=ctx
                     )
                     behind, ahead = map(int, counts.split())
 
@@ -253,7 +236,7 @@ class GitClient:
 
             # Get HEAD commit SHA
             try:
-                head_commit = await self.execute_command(repo_path, ["rev-parse", "HEAD"])
+                head_commit = await self.execute_command(repo_path, ["rev-parse", "HEAD"], ctx=ctx)
                 if ctx:
                     await ctx.debug(f"HEAD commit: {head_commit[:8]}...")
             except GitCommandError:
@@ -274,17 +257,15 @@ class GitClient:
                 await ctx.error(f"Failed to get branch info: {e}")
             return {"current_branch": "unknown", "upstream": None, "ahead": 0, "behind": 0, "head_commit": "unknown"}
 
-    async def get_repository_info(self, repo_path: Path) -> dict[str, Any]:
+    async def get_repository_info(self, repo_path: Path, ctx: Optional["Context"] = None) -> dict[str, Any]:
         """Get general repository information."""
-        ctx = self._get_context()
-
         if ctx:
             await ctx.debug("Getting repository information")
 
         try:
             # Check if it's a bare repository
             try:
-                await self.execute_command(repo_path, ["rev-parse", "--is-bare-repository"])
+                await self.execute_command(repo_path, ["rev-parse", "--is-bare-repository"], ctx=ctx)
                 is_bare = True
             except GitCommandError:
                 is_bare = False
@@ -292,7 +273,7 @@ class GitClient:
             # Get remote URLs
             remotes = {}
             try:
-                remote_output = await self.execute_command(repo_path, ["remote", "-v"])
+                remote_output = await self.execute_command(repo_path, ["remote", "-v"], ctx=ctx)
                 for line in remote_output.split("\n"):
                     if line.strip():
                         parts = line.split()
@@ -311,7 +292,7 @@ class GitClient:
 
             # Check if repository is dirty (has uncommitted changes)
             try:
-                status_output = await self.execute_command(repo_path, ["status", "--porcelain"])
+                status_output = await self.execute_command(repo_path, ["status", "--porcelain"], ctx=ctx)
                 is_dirty = bool(status_output.strip())
             except GitCommandError:
                 is_dirty = False
