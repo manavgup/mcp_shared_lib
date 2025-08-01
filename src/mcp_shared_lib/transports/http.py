@@ -115,7 +115,7 @@ class HttpTransport(HttpBasedTransport):
         health_path = self._http_config.health_check_path
 
         @server.custom_route(health_path, methods=["GET"])
-        async def health_check(request: Request):
+        async def health_check(_request: Request):
             """Health check endpoint for HTTP transport."""
             try:
                 status = self.get_health_status()

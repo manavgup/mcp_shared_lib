@@ -59,22 +59,22 @@ class GitClient:
                     await ctx.error(
                         f"Git command failed (exit {result.returncode}): {stderr_str}"
                     )
-                raise GitCommandError(full_command, result.returncode, stderr_str)
+                raise GitCommandError(full_command, result.returncode, stderr_str) from None
 
             if ctx and stdout_str:
                 await ctx.debug(f"Git command output: {len(stdout_str)} characters")
 
             return stdout_str
 
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             error_msg = "Git command not found - is git installed?"
             if ctx:
                 await ctx.error(error_msg)
-            raise GitCommandError(full_command, -1, error_msg)
+            raise GitCommandError(full_command, -1, error_msg) from e
         except Exception as e:
             if ctx:
                 await ctx.error(f"Unexpected error executing git command: {str(e)}")
-            raise
+            raise GitCommandError(full_command, -1, str(e)) from e
 
     async def get_status(
         self, repo_path: Path, ctx: Optional["Context"] = None
@@ -114,15 +114,15 @@ class GitClient:
             if ctx and status_output:
                 await ctx.debug(f"Git command output: {len(status_output)} characters")
 
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             error_msg = "Git command not found - is git installed?"
             if ctx:
                 await ctx.error(error_msg)
-            raise GitCommandError(full_command, -1, error_msg)
+            raise GitCommandError(full_command, -1, error_msg) from e
         except Exception as e:
             if ctx:
                 await ctx.error(f"Unexpected error executing git command: {str(e)}")
-            raise
+            raise GitCommandError(full_command, -1, str(e)) from e
 
         files = []
         for line in status_output.split("\n"):

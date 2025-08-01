@@ -354,4 +354,11 @@ class GitDiffFactory(BaseFactory):
         hunks = []
 
         for i in range(hunk_count):
-            hunks
+            hunks.append({
+                "start_line": Faker.random_int(1, 100),
+                "lines_added": Faker.random_int(1, 10),
+                "lines_removed": Faker.random_int(0, 5),
+                "content": f"@@ -{Faker.random_int(1, 100)},{Faker.random_int(1, 10)} +{Faker.random_int(1, 100)},{Faker.random_int(1, 10)} @@"
+            })
+
+        return hunks

@@ -8,9 +8,8 @@ This module defines data models representing git file statuses, diffs,
 working directory changes, staged changes, unpushed commits, and stashed changes.
 """
 
-from pydantic import BaseModel, Field, computed_field
-
 from mcp_shared_lib.models.git.files import FileStatus
+from pydantic import BaseModel, Field, computed_field
 
 
 class WorkingDirectoryChanges(BaseModel):

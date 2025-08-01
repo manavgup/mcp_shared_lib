@@ -123,7 +123,7 @@ class SSETransport(HttpBasedTransport):
             health_path = "/healthz"  # SSE transport traditionally uses /healthz
 
         @server.custom_route(health_path, methods=["GET"])
-        async def health_check(request: Request):
+        async def health_check(_request: Request):
             """Health check endpoint for SSE transport."""
             try:
                 status = self.get_health_status()

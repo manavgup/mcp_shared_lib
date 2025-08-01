@@ -145,11 +145,11 @@ class HttpBasedTransport(BaseTransport):
             "protocol": self.config.type,
         }
 
-    def _setup_health_check(self, server: FastMCP) -> None:
+    def _setup_health_check(self, _server: FastMCP) -> None:
         """Set up health check endpoint for HTTP-based transports.
 
         Args:
-            server: FastMCP server instance
+            _server: FastMCP server instance (unused in base implementation)
         """
         transport_config = self.config.get_transport_config()
 
@@ -157,7 +157,7 @@ class HttpBasedTransport(BaseTransport):
         if getattr(transport_config, "enable_health_check", False):
             health_path = getattr(transport_config, "health_check_path", "/health")
 
-            @server.resource(f"health://{health_path}")
+            @_server.resource(f"health://{health_path}")
             async def health_check() -> str:
                 """Health check endpoint."""
                 status = self.get_health_status()
@@ -167,11 +167,11 @@ class HttpBasedTransport(BaseTransport):
                     f"Server: {status['server_name']}\n"
                 )
 
-    def _setup_cors(self, server: FastMCP) -> None:
+    def _setup_cors(self, _server: FastMCP) -> None:
         """Set up CORS configuration for HTTP-based transports.
 
         Args:
-            server: FastMCP server instance
+            _server: FastMCP server instance (unused in base implementation)
         """
         transport_config = self.config.get_transport_config()
 

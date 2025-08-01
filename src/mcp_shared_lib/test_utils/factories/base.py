@@ -7,6 +7,7 @@ a simple Faker implementation and base factory class.
 
 import random
 import uuid
+from contextlib import suppress
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -300,11 +301,8 @@ class BaseFactory:
 
             # If it's a callable (like a Faker method), call it
             if callable(attr_value):
-                try:
+                with suppress(Exception):
                     defaults[attr_name] = attr_value()
-                except Exception:
-                    # Skip if calling fails
-                    pass
             # If it's a regular value, use it directly
             elif not callable(attr_value):
                 defaults[attr_name] = attr_value
