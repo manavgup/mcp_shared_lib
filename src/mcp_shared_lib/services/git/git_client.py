@@ -70,22 +70,81 @@ class GitClient:
         if ctx:
             await ctx.debug("Getting git status (porcelain format)")
 
-        # Get porcelain status for parsing
-        status_output = await self.execute_command(repo_path, ["status", "--porcelain=v1"], ctx=ctx)
+        # Get porcelain status for parsing - DON'T strip the output as leading spaces are significant
+        full_command = ["git", "-C", str(repo_path), "status", "--porcelain=v1"]
+        
+        if ctx:
+            await ctx.debug(f"Executing git command: {' '.join(full_command)}")
+
+        try:
+            result = await asyncio.create_subprocess_exec(
+                *full_command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, cwd=repo_path
+            )
+
+            stdout, stderr = await result.communicate()
+            # Don't strip the output - leading spaces are significant for git status parsing
+            status_output = stdout.decode("utf-8").rstrip('\n')  # Only remove trailing newlines
+            stderr_str = stderr.decode("utf-8").strip()
+
+            if result.returncode != 0:
+                if ctx:
+                    await ctx.error(f"Git command failed (exit {result.returncode}): {stderr_str}")
+                raise GitCommandError(full_command, result.returncode, stderr_str)
+
+            if ctx and status_output:
+                await ctx.debug(f"Git command output: {len(status_output)} characters")
+
+        except FileNotFoundError:
+            error_msg = "Git command not found - is git installed?"
+            if ctx:
+                await ctx.error(error_msg)
+            raise GitCommandError(full_command, -1, error_msg)
+        except Exception as e:
+            if ctx:
+                await ctx.error(f"Unexpected error executing git command: {str(e)}")
+            raise
 
         files = []
         for line in status_output.split("\n"):
-            if line.strip():
-                index_status = line[0] if line[0] != " " else None
-                working_status = line[1] if line[1] != " " else None
-                filename = line[3:] if len(line) > 3 else ""
+            if line.strip() and len(line) >= 2:
+                # Git status porcelain format: XY filename
+                # X = index status (staged), Y = working tree status (unstaged)
+                # For unstaged files: " M filename" (space + M)
+                # For staged files: "M  filename" (M + space)
+                # For both: "MM filename" (M + M)
+                
+                # Handle different line lengths - some git versions may have different formats
+                if len(line) >= 3 and line[2] == ' ':
+                    # Standard format: "XY filename" where position 2 is space
+                    index_status = line[0] if line[0] != " " else None
+                    working_status = line[1] if line[1] != " " else None
+                    filename_start = 3
+                elif len(line) >= 2:
+                    # Compact format: "XYfilename" where there's no space separator
+                    # This shouldn't happen with --porcelain=v1, but handle it just in case
+                    index_status = line[0] if line[0] != " " else None
+                    working_status = line[1] if line[1] != " " else None
+                    filename_start = 2
+                else:
+                    continue
+                
+                # Handle rename case: status code 'R' has format "R  old -> new"
+                if index_status == "R" or working_status == "R":
+                    # For rename, filename is after '-> '
+                    arrow_pos = line.find("->")
+                    if arrow_pos != -1:
+                        filename = line[arrow_pos + 3:].strip()
+                    else:
+                        filename = line[filename_start:].strip()
+                else:
+                    filename = line[filename_start:].strip()
 
                 files.append(
                     {
                         "filename": filename,
                         "index_status": index_status,
                         "working_status": working_status,
-                        "status_code": index_status or working_status or "?",
+                        "status_code": line[:2],  # Keep the full two-character status code
                     }
                 )
 
@@ -114,6 +173,134 @@ class GitClient:
             await ctx.debug(f"Retrieved diff with {lines_count} lines")
 
         return diff_output
+    
+    async def get_diff_stats(self, repo_path: Path, file_path: str, staged: bool = None, ctx: Optional["Context"] = None) -> dict[str, Any]:
+        """Get diff statistics for a specific file.
+        
+        Args:
+            repo_path: Path to git repository
+            file_path: Path to the file
+            staged: If True, get staged diff stats. If False, get working diff stats. If None, detect automatically.
+            ctx: Context for logging
+        """
+        if ctx:
+            await ctx.debug(f"Getting diff stats for {file_path} (staged={staged})")
+
+        try:
+            # If staged is not specified, detect the file status first
+            if staged is None:
+                status_output = await self.execute_command(repo_path, ["status", "--porcelain", "--", file_path], ctx=ctx)
+                
+                if not status_output.strip():
+                    # No changes for this file
+                    if ctx:
+                        await ctx.debug(f"No changes detected for {file_path}")
+                    return {"lines_added": 0, "lines_deleted": 0, "is_binary": False}
+                
+                # Parse the status to understand the file state
+                line = status_output.strip()
+                if len(line) >= 2:
+                    index_status = line[0] if line[0] != ' ' else None
+                    working_status = line[1] if line[1] != ' ' else None
+                    
+                    # If file has index status, it's staged. If it has working status, check working tree.
+                    # If it has both, prefer staged diff for getting the actual changes
+                    if index_status and index_status != '?':
+                        staged = True
+                    elif working_status and working_status != '?':
+                        staged = False
+                    else:
+                        staged = False
+                    
+                    if ctx:
+                        await ctx.debug(f"Auto-detected file state for {file_path}: index='{index_status}', working='{working_status}', using staged={staged}")
+            
+            # Try to get numstat for the appropriate diff
+            commands_to_try = []
+            
+            if staged:
+                # For staged files, compare staged area with HEAD
+                commands_to_try.append(["diff", "--cached", "--numstat", "--", file_path])
+            else:
+                # For working directory files, compare working directory with staged/HEAD
+                commands_to_try.append(["diff", "--numstat", "--", file_path])
+            
+            # If the first approach fails, try the other one as fallback
+            if staged:
+                commands_to_try.append(["diff", "--numstat", "--", file_path])
+            else:
+                commands_to_try.append(["diff", "--cached", "--numstat", "--", file_path])
+            
+            numstat_output = None
+            used_command = None
+            
+            for command in commands_to_try:
+                try:
+                    numstat_output = await self.execute_command(repo_path, command, ctx=ctx)
+                    if numstat_output.strip():
+                        used_command = command
+                        break
+                    elif ctx:
+                        await ctx.debug(f"Command {' '.join(command)} returned empty output")
+                except GitCommandError as e:
+                    if ctx:
+                        await ctx.debug(f"Command {' '.join(command)} failed: {e}")
+                    continue
+            
+            if not numstat_output or not numstat_output.strip():
+                if ctx:
+                    await ctx.warning(f"No diff output found for {file_path} with any command")
+                return {"lines_added": 0, "lines_deleted": 0, "is_binary": False}
+            
+            if ctx:
+                await ctx.debug(f"Successfully got diff stats using: {' '.join(used_command)}")
+            
+            # Parse the numstat output
+            lines = numstat_output.strip().split('\n')
+            for line in lines:
+                if line.strip():
+                    parts = line.split('\t')
+                    if len(parts) >= 3:
+                        # parts[0] = additions, parts[1] = deletions, parts[2] = filename
+                        additions_str = parts[0]
+                        deletions_str = parts[1]
+                        file_in_output = parts[2]
+                        
+                        # Verify this is the correct file (git might return multiple files)
+                        if file_in_output != file_path:
+                            continue
+                        
+                        # Check if binary file (git shows "-" for binary files)
+                        if additions_str == "-" and deletions_str == "-":
+                            if ctx:
+                                await ctx.debug(f"Binary file detected: {file_path}")
+                            return {"lines_added": 0, "lines_deleted": 0, "is_binary": True}
+                        
+                        try:
+                            lines_added = int(additions_str)
+                            lines_deleted = int(deletions_str)
+                            
+                            if ctx:
+                                await ctx.debug(f"Diff stats for {file_path}: +{lines_added}/-{lines_deleted}")
+                            
+                            return {
+                                "lines_added": lines_added,
+                                "lines_deleted": lines_deleted,
+                                "is_binary": False
+                            }
+                        except ValueError:
+                            if ctx:
+                                await ctx.warning(f"Failed to parse numstat output: {line}")
+                            
+            # Fallback - if we can't parse numstat, assume no changes
+            if ctx:
+                await ctx.warning(f"Could not parse diff stats for {file_path}")
+            return {"lines_added": 0, "lines_deleted": 0, "is_binary": False}
+            
+        except Exception as e:
+            if ctx:
+                await ctx.error(f"Failed to get diff stats for {file_path}: {e}")
+            return {"lines_added": 0, "lines_deleted": 0, "is_binary": False}
 
     async def get_unpushed_commits(self, repo_path: Path, remote: str = "origin", ctx: Optional["Context"] = None) -> list[dict[str, Any]]:
         """Get commits that haven't been pushed to remote."""

@@ -8,11 +8,7 @@ This module defines data models representing git file statuses, diffs,
 working directory changes, staged changes, unpushed commits, and stashed changes.
 """
 
-from datetime import datetime
-from typing import Literal, cast
-
-from pydantic import BaseModel, Field
-
+from pydantic import BaseModel, Field, computed_field
 from mcp_shared_lib.models.git.files import FileStatus
 
 
@@ -25,6 +21,7 @@ class WorkingDirectoryChanges(BaseModel):
     renamed_files: list[FileStatus] = Field(default_factory=list, description="Renamed files")
     untracked_files: list[FileStatus] = Field(default_factory=list, description="Untracked files")
 
+    @computed_field
     @property
     def total_files(self) -> int:
         """Total number of changed files."""
@@ -36,6 +33,7 @@ class WorkingDirectoryChanges(BaseModel):
             + len(self.untracked_files)
         )
 
+    @computed_field
     @property
     def has_changes(self) -> bool:
         """Check if there are any changes."""
@@ -52,11 +50,13 @@ class StagedChanges(BaseModel):
 
     staged_files: list[FileStatus] = Field(default_factory=list, description="Staged files")
 
+    @computed_field
     @property
     def total_staged(self) -> int:
         """Total number of staged files."""
         return len(self.staged_files)
 
+    @computed_field
     @property
     def ready_to_commit(self) -> bool:
         """Check if there are staged changes ready to commit."""
