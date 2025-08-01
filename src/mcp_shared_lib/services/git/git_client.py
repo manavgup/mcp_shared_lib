@@ -70,22 +70,81 @@ class GitClient:
         if ctx:
             await ctx.debug("Getting git status (porcelain format)")
 
-        # Get porcelain status for parsing
-        status_output = await self.execute_command(repo_path, ["status", "--porcelain=v1"], ctx=ctx)
+        # Get porcelain status for parsing - DON'T strip the output as leading spaces are significant
+        full_command = ["git", "-C", str(repo_path), "status", "--porcelain=v1"]
+        
+        if ctx:
+            await ctx.debug(f"Executing git command: {' '.join(full_command)}")
+
+        try:
+            result = await asyncio.create_subprocess_exec(
+                *full_command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, cwd=repo_path
+            )
+
+            stdout, stderr = await result.communicate()
+            # Don't strip the output - leading spaces are significant for git status parsing
+            status_output = stdout.decode("utf-8").rstrip('\n')  # Only remove trailing newlines
+            stderr_str = stderr.decode("utf-8").strip()
+
+            if result.returncode != 0:
+                if ctx:
+                    await ctx.error(f"Git command failed (exit {result.returncode}): {stderr_str}")
+                raise GitCommandError(full_command, result.returncode, stderr_str)
+
+            if ctx and status_output:
+                await ctx.debug(f"Git command output: {len(status_output)} characters")
+
+        except FileNotFoundError:
+            error_msg = "Git command not found - is git installed?"
+            if ctx:
+                await ctx.error(error_msg)
+            raise GitCommandError(full_command, -1, error_msg)
+        except Exception as e:
+            if ctx:
+                await ctx.error(f"Unexpected error executing git command: {str(e)}")
+            raise
 
         files = []
         for line in status_output.split("\n"):
-            if line.strip():
-                index_status = line[0] if line[0] != " " else None
-                working_status = line[1] if line[1] != " " else None
-                filename = line[3:] if len(line) > 3 else ""
+            if line.strip() and len(line) >= 2:
+                # Git status porcelain format: XY filename
+                # X = index status (staged), Y = working tree status (unstaged)
+                # For unstaged files: " M filename" (space + M)
+                # For staged files: "M  filename" (M + space)
+                # For both: "MM filename" (M + M)
+                
+                # Handle different line lengths - some git versions may have different formats
+                if len(line) >= 3 and line[2] == ' ':
+                    # Standard format: "XY filename" where position 2 is space
+                    index_status = line[0] if line[0] != " " else None
+                    working_status = line[1] if line[1] != " " else None
+                    filename_start = 3
+                elif len(line) >= 2:
+                    # Compact format: "XYfilename" where there's no space separator
+                    # This shouldn't happen with --porcelain=v1, but handle it just in case
+                    index_status = line[0] if line[0] != " " else None
+                    working_status = line[1] if line[1] != " " else None
+                    filename_start = 2
+                else:
+                    continue
+                
+                # Handle rename case: status code 'R' has format "R  old -> new"
+                if index_status == "R" or working_status == "R":
+                    # For rename, filename is after '-> '
+                    arrow_pos = line.find("->")
+                    if arrow_pos != -1:
+                        filename = line[arrow_pos + 3:].strip()
+                    else:
+                        filename = line[filename_start:].strip()
+                else:
+                    filename = line[filename_start:].strip()
 
                 files.append(
                     {
                         "filename": filename,
                         "index_status": index_status,
                         "working_status": working_status,
-                        "status_code": index_status or working_status or "?",
+                        "status_code": line[:2],  # Keep the full two-character status code
                     }
                 )
 
