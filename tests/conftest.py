@@ -18,7 +18,7 @@ from unittest.mock import Mock
 import pytest
 
 try:
-    from git import GitCommandError, Repo
+    from git import Repo
 
     HAS_GIT = True
 except ImportError:

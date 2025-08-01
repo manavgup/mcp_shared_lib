@@ -1,5 +1,3 @@
-"""Common base classes and enums."""
-
 """Common base classes and enums for all models."""
 
 from enum import Enum

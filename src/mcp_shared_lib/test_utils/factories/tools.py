@@ -465,7 +465,7 @@ def create_tool_execution_batch(
         ]
 
     results = []
-    for i in range(count):
+    for _ in range(count):
         # Determine status based on success rate
         if random.random() < success_rate:
             status = "success"
@@ -504,7 +504,7 @@ def create_server_farm(server_count: int = 3) -> dict[str, Any]:
                 s["max_concurrent_requests"] for s in servers
             ),
             "total_tools": len(
-                set(tool for s in servers for tool in s["available_tools"])
+                {tool for s in servers for tool in s["available_tools"]}
             ),
             "average_response_time_ms": Faker.random_int(100, 1000),
         },

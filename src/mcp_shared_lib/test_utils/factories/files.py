@@ -409,7 +409,7 @@ def create_file_changes(
 
     changes = []
 
-    for i in range(count):
+    for _ in range(count):
         # Determine risk level
         if risk_distribution == "low":
             change = FileChangeFactory.with_traits("low_risk", **kwargs)
