@@ -13,4 +13,9 @@ class BaseMCPSettings(BaseSettings):
     )
 
     log_level: str = Field(default="INFO", description="Logging level")
-    max_diff_lines: int = Field(default=1000, ge=10, le=10000, description="Maximum lines to include in diff output")
+    max_diff_lines: int = Field(
+        default=1000,
+        ge=10,
+        le=10000,
+        description="Maximum lines to include in diff output",
+    )

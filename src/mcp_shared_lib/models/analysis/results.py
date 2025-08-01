@@ -23,24 +23,39 @@ class OutstandingChangesAnalysis(BaseModel):
     """Comprehensive analysis of all outstanding changes in a repository."""
 
     repository_path: Path = Field(..., description="Path to the analyzed repository")
-    analysis_timestamp: datetime = Field(default_factory=datetime.now, description="When this analysis was performed")
-    total_outstanding_files: int = Field(0, ge=0, description="Total number of files with outstanding changes")
+    analysis_timestamp: datetime = Field(
+        default_factory=datetime.now, description="When this analysis was performed"
+    )
+    total_outstanding_files: int = Field(
+        0, ge=0, description="Total number of files with outstanding changes"
+    )
     categories: ChangeCategorization = Field(
         default_factory=ChangeCategorization,
         description="Categorization of changed files",
     )
-    risk_assessment: RiskAssessment = Field(..., description="Risk assessment of the changes")
-    recommendations: list[str] = Field(default_factory=list, description="Recommended actions based on analysis")
+    risk_assessment: RiskAssessment = Field(
+        ..., description="Risk assessment of the changes"
+    )
+    recommendations: list[str] = Field(
+        default_factory=list, description="Recommended actions based on analysis"
+    )
     summary: str = Field(..., description="Human-readable summary of the analysis")
-    repository_status: RepositoryStatus | None = Field(None, description="Complete repository status (optional)")
-    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata about the analysis")
+    repository_status: RepositoryStatus | None = Field(
+        None, description="Complete repository status (optional)"
+    )
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata about the analysis"
+    )
 
     @property
     def is_ready_for_commit(self) -> bool:
         """Check if changes are ready to be committed."""
         if not self.repository_status:
             return False
-        return self.repository_status.working_directory.has_changes and not self.risk_assessment.is_high_risk
+        return (
+            self.repository_status.working_directory.has_changes
+            and not self.risk_assessment.is_high_risk
+        )
 
     @property
     def is_ready_for_push(self) -> bool:

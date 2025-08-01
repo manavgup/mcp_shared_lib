@@ -11,7 +11,11 @@ from mcp_shared_lib.models.analysis.results import OutstandingChangesAnalysis
 from mcp_shared_lib.models.analysis.risk import RiskAssessment
 
 # Models
-from mcp_shared_lib.models.git.changes import FileStatus, StagedChanges, WorkingDirectoryChanges
+from mcp_shared_lib.models.git.changes import (
+    FileStatus,
+    StagedChanges,
+    WorkingDirectoryChanges,
+)
 from mcp_shared_lib.models.git.commits import StashedChanges, UnpushedCommit
 from mcp_shared_lib.models.git.repository import GitBranch, GitRemote, LocalRepository
 
@@ -32,11 +36,9 @@ __all__ = [
     "GitBranch",
     "StashedChanges",
     "UnpushedCommit",
-
     # Services
     "GitClient",
     "settings",
-
     # Configuration
     "BaseMCPSettings",
     "GitAnalyzerSettings",

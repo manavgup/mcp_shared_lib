@@ -11,8 +11,18 @@ from mcp_shared_lib.models.analysis import (
 )
 
 # Common enums and type aliases
-from mcp_shared_lib.models.base.common import GitStatusCode, PRPriority, PRPriorityType, RiskLevel, RiskLevelType
-from mcp_shared_lib.models.git.changes import FileStatus, StagedChanges, WorkingDirectoryChanges
+from mcp_shared_lib.models.base.common import (
+    GitStatusCode,
+    PRPriority,
+    PRPriorityType,
+    RiskLevel,
+    RiskLevelType,
+)
+from mcp_shared_lib.models.git.changes import (
+    FileStatus,
+    StagedChanges,
+    WorkingDirectoryChanges,
+)
 from mcp_shared_lib.models.git.commits import StashedChanges, UnpushedCommit
 from mcp_shared_lib.models.git.files import DiffHunk, FileDiff
 from mcp_shared_lib.models.git.repository import GitBranch, GitRemote, LocalRepository

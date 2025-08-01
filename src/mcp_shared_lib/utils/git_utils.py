@@ -59,7 +59,12 @@ def parse_git_url(url: str) -> dict[str, str]:
     ssh_match = re.match(ssh_pattern, url)
 
     if ssh_match:
-        return {"protocol": "ssh", "host": ssh_match.group(1), "owner": ssh_match.group(2), "repo": ssh_match.group(3)}
+        return {
+            "protocol": "ssh",
+            "host": ssh_match.group(1),
+            "owner": ssh_match.group(2),
+            "repo": ssh_match.group(3),
+        }
 
     # Handle HTTPS URLs like https://github.com/user/repo.git
     https_pattern = r"https://([^/]+)/([^/]+)/(.+?)(?:\.git)?$"

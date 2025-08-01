@@ -3,7 +3,7 @@
 import asyncio
 import json
 from pathlib import Path
-from typing import Any, TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from mcp_shared_lib.config.git_analyzer import GitAnalyzerSettings
 from mcp_shared_lib.utils import logging_service
@@ -29,7 +29,13 @@ class GitClient:
         self.settings = settings
         self.logger = logging_service.get_logger(__name__)
 
-    async def execute_command(self, repo_path: Path, command: list[str], check: bool = True, ctx: Optional["Context"] = None) -> str:
+    async def execute_command(
+        self,
+        repo_path: Path,
+        command: list[str],
+        check: bool = True,
+        ctx: Optional["Context"] = None,
+    ) -> str:
         """Execute a git command in the given repository."""
         full_command = ["git", "-C", str(repo_path)] + command
 
@@ -38,7 +44,10 @@ class GitClient:
 
         try:
             result = await asyncio.create_subprocess_exec(
-                *full_command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, cwd=repo_path
+                *full_command,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                cwd=repo_path,
             )
 
             stdout, stderr = await result.communicate()
@@ -47,7 +56,9 @@ class GitClient:
 
             if check and result.returncode != 0:
                 if ctx:
-                    await ctx.error(f"Git command failed (exit {result.returncode}): {stderr_str}")
+                    await ctx.error(
+                        f"Git command failed (exit {result.returncode}): {stderr_str}"
+                    )
                 raise GitCommandError(full_command, result.returncode, stderr_str)
 
             if ctx and stdout_str:
@@ -65,30 +76,39 @@ class GitClient:
                 await ctx.error(f"Unexpected error executing git command: {str(e)}")
             raise
 
-    async def get_status(self, repo_path: Path, ctx: Optional["Context"] = None) -> dict[str, Any]:
+    async def get_status(
+        self, repo_path: Path, ctx: Optional["Context"] = None
+    ) -> dict[str, Any]:
         """Get git status information."""
         if ctx:
             await ctx.debug("Getting git status (porcelain format)")
 
         # Get porcelain status for parsing - DON'T strip the output as leading spaces are significant
         full_command = ["git", "-C", str(repo_path), "status", "--porcelain=v1"]
-        
+
         if ctx:
             await ctx.debug(f"Executing git command: {' '.join(full_command)}")
 
         try:
             result = await asyncio.create_subprocess_exec(
-                *full_command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, cwd=repo_path
+                *full_command,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                cwd=repo_path,
             )
 
             stdout, stderr = await result.communicate()
             # Don't strip the output - leading spaces are significant for git status parsing
-            status_output = stdout.decode("utf-8").rstrip('\n')  # Only remove trailing newlines
+            status_output = stdout.decode("utf-8").rstrip(
+                "\n"
+            )  # Only remove trailing newlines
             stderr_str = stderr.decode("utf-8").strip()
 
             if result.returncode != 0:
                 if ctx:
-                    await ctx.error(f"Git command failed (exit {result.returncode}): {stderr_str}")
+                    await ctx.error(
+                        f"Git command failed (exit {result.returncode}): {stderr_str}"
+                    )
                 raise GitCommandError(full_command, result.returncode, stderr_str)
 
             if ctx and status_output:
@@ -112,9 +132,9 @@ class GitClient:
                 # For unstaged files: " M filename" (space + M)
                 # For staged files: "M  filename" (M + space)
                 # For both: "MM filename" (M + M)
-                
+
                 # Handle different line lengths - some git versions may have different formats
-                if len(line) >= 3 and line[2] == ' ':
+                if len(line) >= 3 and line[2] == " ":
                     # Standard format: "XY filename" where position 2 is space
                     index_status = line[0] if line[0] != " " else None
                     working_status = line[1] if line[1] != " " else None
@@ -127,13 +147,13 @@ class GitClient:
                     filename_start = 2
                 else:
                     continue
-                
+
                 # Handle rename case: status code 'R' has format "R  old -> new"
                 if index_status == "R" or working_status == "R":
                     # For rename, filename is after '-> '
                     arrow_pos = line.find("->")
                     if arrow_pos != -1:
-                        filename = line[arrow_pos + 3:].strip()
+                        filename = line[arrow_pos + 3 :].strip()
                     else:
                         filename = line[filename_start:].strip()
                 else:
@@ -144,7 +164,9 @@ class GitClient:
                         "filename": filename,
                         "index_status": index_status,
                         "working_status": working_status,
-                        "status_code": line[:2],  # Keep the full two-character status code
+                        "status_code": line[
+                            :2
+                        ],  # Keep the full two-character status code
                     }
                 )
 
@@ -153,7 +175,13 @@ class GitClient:
 
         return {"files": files}
 
-    async def get_diff(self, repo_path: Path, staged: bool = False, file_path: Optional[str] = None, ctx: Optional["Context"] = None) -> str:
+    async def get_diff(
+        self,
+        repo_path: Path,
+        staged: bool = False,
+        file_path: Optional[str] = None,
+        ctx: Optional["Context"] = None,
+    ) -> str:
         """Get diff output."""
         command = ["diff"]
         if staged:
@@ -173,10 +201,16 @@ class GitClient:
             await ctx.debug(f"Retrieved diff with {lines_count} lines")
 
         return diff_output
-    
-    async def get_diff_stats(self, repo_path: Path, file_path: str, staged: bool = None, ctx: Optional["Context"] = None) -> dict[str, Any]:
+
+    async def get_diff_stats(
+        self,
+        repo_path: Path,
+        file_path: str,
+        staged: bool = None,
+        ctx: Optional["Context"] = None,
+    ) -> dict[str, Any]:
         """Get diff statistics for a specific file.
-        
+
         Args:
             repo_path: Path to git repository
             file_path: Path to the file
@@ -189,127 +223,155 @@ class GitClient:
         try:
             # If staged is not specified, detect the file status first
             if staged is None:
-                status_output = await self.execute_command(repo_path, ["status", "--porcelain", "--", file_path], ctx=ctx)
-                
+                status_output = await self.execute_command(
+                    repo_path, ["status", "--porcelain", "--", file_path], ctx=ctx
+                )
+
                 if not status_output.strip():
                     # No changes for this file
                     if ctx:
                         await ctx.debug(f"No changes detected for {file_path}")
                     return {"lines_added": 0, "lines_deleted": 0, "is_binary": False}
-                
+
                 # Parse the status to understand the file state
                 line = status_output.strip()
                 if len(line) >= 2:
-                    index_status = line[0] if line[0] != ' ' else None
-                    working_status = line[1] if line[1] != ' ' else None
-                    
+                    index_status = line[0] if line[0] != " " else None
+                    working_status = line[1] if line[1] != " " else None
+
                     # If file has index status, it's staged. If it has working status, check working tree.
                     # If it has both, prefer staged diff for getting the actual changes
-                    if index_status and index_status != '?':
+                    if index_status and index_status != "?":
                         staged = True
-                    elif working_status and working_status != '?':
+                    elif working_status and working_status != "?":
                         staged = False
                     else:
                         staged = False
-                    
+
                     if ctx:
-                        await ctx.debug(f"Auto-detected file state for {file_path}: index='{index_status}', working='{working_status}', using staged={staged}")
-            
+                        await ctx.debug(
+                            f"Auto-detected file state for {file_path}: index='{index_status}', working='{working_status}', using staged={staged}"
+                        )
+
             # Try to get numstat for the appropriate diff
             commands_to_try = []
-            
+
             if staged:
                 # For staged files, compare staged area with HEAD
-                commands_to_try.append(["diff", "--cached", "--numstat", "--", file_path])
+                commands_to_try.append(
+                    ["diff", "--cached", "--numstat", "--", file_path]
+                )
             else:
                 # For working directory files, compare working directory with staged/HEAD
                 commands_to_try.append(["diff", "--numstat", "--", file_path])
-            
+
             # If the first approach fails, try the other one as fallback
             if staged:
                 commands_to_try.append(["diff", "--numstat", "--", file_path])
             else:
-                commands_to_try.append(["diff", "--cached", "--numstat", "--", file_path])
-            
+                commands_to_try.append(
+                    ["diff", "--cached", "--numstat", "--", file_path]
+                )
+
             numstat_output = None
             used_command = None
-            
+
             for command in commands_to_try:
                 try:
-                    numstat_output = await self.execute_command(repo_path, command, ctx=ctx)
+                    numstat_output = await self.execute_command(
+                        repo_path, command, ctx=ctx
+                    )
                     if numstat_output.strip():
                         used_command = command
                         break
                     elif ctx:
-                        await ctx.debug(f"Command {' '.join(command)} returned empty output")
+                        await ctx.debug(
+                            f"Command {' '.join(command)} returned empty output"
+                        )
                 except GitCommandError as e:
                     if ctx:
                         await ctx.debug(f"Command {' '.join(command)} failed: {e}")
                     continue
-            
+
             if not numstat_output or not numstat_output.strip():
                 if ctx:
-                    await ctx.warning(f"No diff output found for {file_path} with any command")
+                    await ctx.warning(
+                        f"No diff output found for {file_path} with any command"
+                    )
                 return {"lines_added": 0, "lines_deleted": 0, "is_binary": False}
-            
+
             if ctx:
-                await ctx.debug(f"Successfully got diff stats using: {' '.join(used_command)}")
-            
+                await ctx.debug(
+                    f"Successfully got diff stats using: {' '.join(used_command)}"
+                )
+
             # Parse the numstat output
-            lines = numstat_output.strip().split('\n')
+            lines = numstat_output.strip().split("\n")
             for line in lines:
                 if line.strip():
-                    parts = line.split('\t')
+                    parts = line.split("\t")
                     if len(parts) >= 3:
                         # parts[0] = additions, parts[1] = deletions, parts[2] = filename
                         additions_str = parts[0]
                         deletions_str = parts[1]
                         file_in_output = parts[2]
-                        
+
                         # Verify this is the correct file (git might return multiple files)
                         if file_in_output != file_path:
                             continue
-                        
+
                         # Check if binary file (git shows "-" for binary files)
                         if additions_str == "-" and deletions_str == "-":
                             if ctx:
                                 await ctx.debug(f"Binary file detected: {file_path}")
-                            return {"lines_added": 0, "lines_deleted": 0, "is_binary": True}
-                        
+                            return {
+                                "lines_added": 0,
+                                "lines_deleted": 0,
+                                "is_binary": True,
+                            }
+
                         try:
                             lines_added = int(additions_str)
                             lines_deleted = int(deletions_str)
-                            
+
                             if ctx:
-                                await ctx.debug(f"Diff stats for {file_path}: +{lines_added}/-{lines_deleted}")
-                            
+                                await ctx.debug(
+                                    f"Diff stats for {file_path}: +{lines_added}/-{lines_deleted}"
+                                )
+
                             return {
                                 "lines_added": lines_added,
                                 "lines_deleted": lines_deleted,
-                                "is_binary": False
+                                "is_binary": False,
                             }
                         except ValueError:
                             if ctx:
-                                await ctx.warning(f"Failed to parse numstat output: {line}")
-                            
+                                await ctx.warning(
+                                    f"Failed to parse numstat output: {line}"
+                                )
+
             # Fallback - if we can't parse numstat, assume no changes
             if ctx:
                 await ctx.warning(f"Could not parse diff stats for {file_path}")
             return {"lines_added": 0, "lines_deleted": 0, "is_binary": False}
-            
+
         except Exception as e:
             if ctx:
                 await ctx.error(f"Failed to get diff stats for {file_path}: {e}")
             return {"lines_added": 0, "lines_deleted": 0, "is_binary": False}
 
-    async def get_unpushed_commits(self, repo_path: Path, remote: str = "origin", ctx: Optional["Context"] = None) -> list[dict[str, Any]]:
+    async def get_unpushed_commits(
+        self, repo_path: Path, remote: str = "origin", ctx: Optional["Context"] = None
+    ) -> list[dict[str, Any]]:
         """Get commits that haven't been pushed to remote."""
         if ctx:
             await ctx.debug(f"Getting unpushed commits for remote '{remote}'")
 
         try:
             # Get current branch
-            current_branch = await self.execute_command(repo_path, ["branch", "--show-current"], ctx=ctx)
+            current_branch = await self.execute_command(
+                repo_path, ["branch", "--show-current"], ctx=ctx
+            )
 
             if ctx:
                 await ctx.debug(f"Current branch: {current_branch}")
@@ -322,13 +384,19 @@ class GitClient:
                 if ctx:
                     await ctx.debug(f"Checking for commits ahead of {upstream}")
 
-                output = await self.execute_command(repo_path, ["log", f"{upstream}..HEAD", log_format], ctx=ctx)
+                output = await self.execute_command(
+                    repo_path, ["log", f"{upstream}..HEAD", log_format], ctx=ctx
+                )
             except GitCommandError:
                 # If upstream doesn't exist, get all commits (limited)
                 if ctx:
-                    await ctx.warning(f"Upstream {upstream} not found, getting recent commits")
+                    await ctx.warning(
+                        f"Upstream {upstream} not found, getting recent commits"
+                    )
 
-                output = await self.execute_command(repo_path, ["log", log_format, "--max-count=10"], ctx=ctx)
+                output = await self.execute_command(
+                    repo_path, ["log", log_format, "--max-count=10"], ctx=ctx
+                )
 
             commits = []
             for line in output.split("\n"):
@@ -338,7 +406,9 @@ class GitClient:
                         commits.append(commit_data)
                     except json.JSONDecodeError:
                         if ctx:
-                            await ctx.warning(f"Failed to parse commit JSON: {line[:50]}...")
+                            await ctx.warning(
+                                f"Failed to parse commit JSON: {line[:50]}..."
+                            )
                         continue
 
             if ctx:
@@ -351,13 +421,17 @@ class GitClient:
                 await ctx.warning(f"Failed to get unpushed commits: {e}")
             return []
 
-    async def get_stash_list(self, repo_path: Path, ctx: Optional["Context"] = None) -> list[dict[str, Any]]:
+    async def get_stash_list(
+        self, repo_path: Path, ctx: Optional["Context"] = None
+    ) -> list[dict[str, Any]]:
         """Get list of stashed changes."""
         if ctx:
             await ctx.debug("Getting git stash list")
 
         try:
-            output = await self.execute_command(repo_path, ["stash", "list", "--pretty=format:%gd|%s|%cr"], ctx=ctx)
+            output = await self.execute_command(
+                repo_path, ["stash", "list", "--pretty=format:%gd|%s|%cr"], ctx=ctx
+            )
 
             stashes = []
             for i, line in enumerate(output.split("\n")):
@@ -383,14 +457,18 @@ class GitClient:
                 await ctx.warning(f"Failed to get stash list: {e}")
             return []
 
-    async def get_branch_info(self, repo_path: Path, ctx: Optional["Context"] = None) -> dict[str, Any]:
+    async def get_branch_info(
+        self, repo_path: Path, ctx: Optional["Context"] = None
+    ) -> dict[str, Any]:
         """Get branch information."""
         if ctx:
             await ctx.debug("Getting branch information")
 
         try:
             # Get current branch
-            current_branch = await self.execute_command(repo_path, ["branch", "--show-current"], ctx=ctx)
+            current_branch = await self.execute_command(
+                repo_path, ["branch", "--show-current"], ctx=ctx
+            )
 
             if ctx:
                 await ctx.debug(f"Current branch: {current_branch}")
@@ -398,7 +476,9 @@ class GitClient:
             # Get upstream info
             upstream = None
             try:
-                upstream = await self.execute_command(repo_path, ["rev-parse", "--abbrev-ref", "@{upstream}"], ctx=ctx)
+                upstream = await self.execute_command(
+                    repo_path, ["rev-parse", "--abbrev-ref", "@{upstream}"], ctx=ctx
+                )
                 if ctx:
                     await ctx.debug(f"Upstream branch: {upstream}")
             except GitCommandError:
@@ -410,12 +490,16 @@ class GitClient:
             if upstream:
                 try:
                     counts = await self.execute_command(
-                        repo_path, ["rev-list", "--left-right", "--count", f"{upstream}...HEAD"], ctx=ctx
+                        repo_path,
+                        ["rev-list", "--left-right", "--count", f"{upstream}...HEAD"],
+                        ctx=ctx,
                     )
                     behind, ahead = map(int, counts.split())
 
                     if ctx:
-                        await ctx.debug(f"Branch status: {ahead} ahead, {behind} behind")
+                        await ctx.debug(
+                            f"Branch status: {ahead} ahead, {behind} behind"
+                        )
 
                 except (GitCommandError, ValueError) as e:
                     if ctx:
@@ -423,7 +507,9 @@ class GitClient:
 
             # Get HEAD commit SHA
             try:
-                head_commit = await self.execute_command(repo_path, ["rev-parse", "HEAD"], ctx=ctx)
+                head_commit = await self.execute_command(
+                    repo_path, ["rev-parse", "HEAD"], ctx=ctx
+                )
                 if ctx:
                     await ctx.debug(f"HEAD commit: {head_commit[:8]}...")
             except GitCommandError:
@@ -442,9 +528,17 @@ class GitClient:
         except GitCommandError as e:
             if ctx:
                 await ctx.error(f"Failed to get branch info: {e}")
-            return {"current_branch": "unknown", "upstream": None, "ahead": 0, "behind": 0, "head_commit": "unknown"}
+            return {
+                "current_branch": "unknown",
+                "upstream": None,
+                "ahead": 0,
+                "behind": 0,
+                "head_commit": "unknown",
+            }
 
-    async def get_repository_info(self, repo_path: Path, ctx: Optional["Context"] = None) -> dict[str, Any]:
+    async def get_repository_info(
+        self, repo_path: Path, ctx: Optional["Context"] = None
+    ) -> dict[str, Any]:
         """Get general repository information."""
         if ctx:
             await ctx.debug("Getting repository information")
@@ -452,7 +546,9 @@ class GitClient:
         try:
             # Check if it's a bare repository
             try:
-                await self.execute_command(repo_path, ["rev-parse", "--is-bare-repository"], ctx=ctx)
+                await self.execute_command(
+                    repo_path, ["rev-parse", "--is-bare-repository"], ctx=ctx
+                )
                 is_bare = True
             except GitCommandError:
                 is_bare = False
@@ -460,7 +556,9 @@ class GitClient:
             # Get remote URLs
             remotes = {}
             try:
-                remote_output = await self.execute_command(repo_path, ["remote", "-v"], ctx=ctx)
+                remote_output = await self.execute_command(
+                    repo_path, ["remote", "-v"], ctx=ctx
+                )
                 for line in remote_output.split("\n"):
                     if line.strip():
                         parts = line.split()
@@ -479,17 +577,31 @@ class GitClient:
 
             # Check if repository is dirty (has uncommitted changes)
             try:
-                status_output = await self.execute_command(repo_path, ["status", "--porcelain"], ctx=ctx)
+                status_output = await self.execute_command(
+                    repo_path, ["status", "--porcelain"], ctx=ctx
+                )
                 is_dirty = bool(status_output.strip())
             except GitCommandError:
                 is_dirty = False
 
             if ctx:
-                await ctx.debug(f"Repository info: bare={is_bare}, dirty={is_dirty}, remotes={len(remotes)}")
+                await ctx.debug(
+                    f"Repository info: bare={is_bare}, dirty={is_dirty}, remotes={len(remotes)}"
+                )
 
-            return {"is_bare": is_bare, "is_dirty": is_dirty, "remotes": remotes, "root_path": str(repo_path)}
+            return {
+                "is_bare": is_bare,
+                "is_dirty": is_dirty,
+                "remotes": remotes,
+                "root_path": str(repo_path),
+            }
 
         except Exception as e:
             if ctx:
                 await ctx.error(f"Failed to get repository info: {e}")
-            return {"is_bare": False, "is_dirty": False, "remotes": {}, "root_path": str(repo_path)}
+            return {
+                "is_bare": False,
+                "is_dirty": False,
+                "remotes": {},
+                "root_path": str(repo_path),
+            }

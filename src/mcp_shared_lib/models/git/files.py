@@ -1,6 +1,5 @@
 """Git file status and diff models."""
 
-from datetime import datetime
 from typing import Literal, cast
 
 from pydantic import BaseModel, Field
@@ -53,7 +52,9 @@ class FileStatus(BaseModel):
             "?": "untracked",
         }
         return cast(
-            Literal["addition", "modification", "deletion", "rename", "copy", "untracked"],
+            Literal[
+                "addition", "modification", "deletion", "rename", "copy", "untracked"
+            ],
             mapping.get(self.status_code, "modification"),
         )
 

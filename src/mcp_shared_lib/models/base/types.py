@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Common types and enums for MCP models.
 
 Copyright 2025
@@ -10,6 +9,7 @@ This module defines shared types and enums used across MCP components.
 
 from enum import Enum
 
+
 class LogLevel(str, Enum):
     DEBUG = "DEBUG"
     INFO = "INFO"
@@ -18,4 +18,4 @@ class LogLevel(str, Enum):
     ERROR = "ERROR"
     CRITICAL = "CRITICAL"
     ALERT = "ALERT"
-    EMERGENCY = "EMERGENCY" 
+    EMERGENCY = "EMERGENCY"

@@ -8,18 +8,28 @@ This module defines data models representing git file statuses, diffs,
 working directory changes, staged changes, unpushed commits, and stashed changes.
 """
 
-from pydantic import BaseModel, Field, computed_field
 from mcp_shared_lib.models.git.files import FileStatus
+from pydantic import BaseModel, Field, computed_field
 
 
 class WorkingDirectoryChanges(BaseModel):
     """Status of working directory changes."""
 
-    modified_files: list[FileStatus] = Field(default_factory=list, description="Modified files")
-    added_files: list[FileStatus] = Field(default_factory=list, description="Added files")
-    deleted_files: list[FileStatus] = Field(default_factory=list, description="Deleted files")
-    renamed_files: list[FileStatus] = Field(default_factory=list, description="Renamed files")
-    untracked_files: list[FileStatus] = Field(default_factory=list, description="Untracked files")
+    modified_files: list[FileStatus] = Field(
+        default_factory=list, description="Modified files"
+    )
+    added_files: list[FileStatus] = Field(
+        default_factory=list, description="Added files"
+    )
+    deleted_files: list[FileStatus] = Field(
+        default_factory=list, description="Deleted files"
+    )
+    renamed_files: list[FileStatus] = Field(
+        default_factory=list, description="Renamed files"
+    )
+    untracked_files: list[FileStatus] = Field(
+        default_factory=list, description="Untracked files"
+    )
 
     @computed_field
     @property
@@ -42,13 +52,21 @@ class WorkingDirectoryChanges(BaseModel):
     @property
     def all_files(self) -> list[FileStatus]:
         """Get all changed files as a single list."""
-        return self.modified_files + self.added_files + self.deleted_files + self.renamed_files + self.untracked_files
+        return (
+            self.modified_files
+            + self.added_files
+            + self.deleted_files
+            + self.renamed_files
+            + self.untracked_files
+        )
 
 
 class StagedChanges(BaseModel):
     """Changes staged for commit."""
 
-    staged_files: list[FileStatus] = Field(default_factory=list, description="Staged files")
+    staged_files: list[FileStatus] = Field(
+        default_factory=list, description="Staged files"
+    )
 
     @computed_field
     @property

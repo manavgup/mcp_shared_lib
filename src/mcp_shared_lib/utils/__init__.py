@@ -17,7 +17,11 @@ from mcp_shared_lib.utils.git_utils import (
 )
 
 # Logging utilities
-from mcp_shared_lib.utils.logging_utils import logging_service, setup_logging, get_logger
+from mcp_shared_lib.utils.logging_utils import (
+    get_logger,
+    logging_service,
+    setup_logging,
+)
 
 __all__ = [
     # File utils

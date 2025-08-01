@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Logging Service Implementation.
 
 Copyright 2025
@@ -12,8 +11,9 @@ subscriptions.
 
 import asyncio
 import logging
+from collections.abc import AsyncGenerator
 from datetime import datetime, timezone
-from typing import Any, AsyncGenerator, Dict, List, Optional
+from typing import Any, Optional
 
 from mcp_shared_lib.models.base.types import LogLevel
 
@@ -31,8 +31,8 @@ class LoggingService:
     def __init__(self):
         """Initialize logging service."""
         self._level = LogLevel.INFO
-        self._subscribers: List[asyncio.Queue] = []
-        self._loggers: Dict[str, logging.Logger] = {}
+        self._subscribers: list[asyncio.Queue] = []
+        self._loggers: dict[str, logging.Logger] = {}
 
     async def initialize(self, level: LogLevel) -> None:
         """Initialize logging service."""
@@ -85,9 +85,7 @@ class LoggingService:
         for logger in self._loggers.values():
             logger.setLevel(log_level)
 
-        await self.notify(
-            f"Log level set to {level}", LogLevel.INFO, "logging"
-        )
+        await self.notify(f"Log level set to {level}", LogLevel.INFO, "logging")
 
     async def notify(
         self, data: Any, level: LogLevel, logger_name: Optional[str] = None
@@ -127,7 +125,7 @@ class LoggingService:
             except Exception as e:
                 logger.error(f"Failed to notify subscriber: {e}")
 
-    async def subscribe(self) -> AsyncGenerator[Dict[str, Any], None]:
+    async def subscribe(self) -> AsyncGenerator[dict[str, Any], None]:
         """Subscribe to log messages.
 
         Returns a generator yielding log message events.

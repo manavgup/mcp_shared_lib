@@ -37,10 +37,16 @@ class RepositoryStatus(BaseModel):
     """Complete status of a repository's outstanding changes."""
 
     repository: LocalRepository = Field(..., description="Repository information")
-    working_directory: WorkingDirectoryChanges = Field(..., description="Working directory changes")
+    working_directory: WorkingDirectoryChanges = Field(
+        ..., description="Working directory changes"
+    )
     staged_changes: StagedChanges = Field(..., description="Staged changes")
-    unpushed_commits: list[UnpushedCommit] = Field(default_factory=list, description="Commits not yet pushed")
-    stashed_changes: list[StashedChanges] = Field(default_factory=list, description="Stashed changes")
+    unpushed_commits: list[UnpushedCommit] = Field(
+        default_factory=list, description="Commits not yet pushed"
+    )
+    stashed_changes: list[StashedChanges] = Field(
+        default_factory=list, description="Stashed changes"
+    )
     branch_status: BranchStatus = Field(..., description="Branch status information")
 
     @property

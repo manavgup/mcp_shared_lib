@@ -1,7 +1,8 @@
 """Base tool functionality for FastMCP tools."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict
+from typing import Any
+
 from mcp_shared_lib.utils import logging_service
 
 
@@ -12,7 +13,7 @@ class BaseMCPTool(ABC):
         self.logger = logging_service.get_logger(self.__class__.__name__)
 
     @abstractmethod
-    async def execute(self, **kwargs) -> Dict[str, Any]:
+    async def execute(self, **kwargs) -> dict[str, Any]:
         """Execute the tool's main functionality."""
         pass
 
@@ -21,7 +22,9 @@ class BaseMCPTool(ABC):
         param_str = ", ".join(f"{k}={v}" for k, v in params.items())
         self.logger.info(f"Starting {operation} with parameters: {param_str}")
 
-    def _log_execution_end(self, operation: str, success: bool = True, **results) -> None:
+    def _log_execution_end(
+        self, operation: str, success: bool = True, **results
+    ) -> None:
         """Log the end of an operation."""
         status = "completed" if success else "failed"
         result_str = ", ".join(f"{k}={v}" for k, v in results.items())

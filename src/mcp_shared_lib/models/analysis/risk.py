@@ -8,11 +8,21 @@ from pydantic import BaseModel, Field
 class RiskAssessment(BaseModel):
     """Assessment of risk level for the current changes."""
 
-    risk_level: Literal["low", "medium", "high"] = Field(..., description="Overall risk level of the changes")
-    risk_factors: list[str] = Field(default_factory=list, description="Factors contributing to the risk level")
-    large_changes: list[str] = Field(default_factory=list, description="Files with >100 line changes")
-    potential_conflicts: list[str] = Field(default_factory=list, description="Files that might cause merge conflicts")
-    binary_changes: list[str] = Field(default_factory=list, description="Binary files that have changed")
+    risk_level: Literal["low", "medium", "high"] = Field(
+        ..., description="Overall risk level of the changes"
+    )
+    risk_factors: list[str] = Field(
+        default_factory=list, description="Factors contributing to the risk level"
+    )
+    large_changes: list[str] = Field(
+        default_factory=list, description="Files with >100 line changes"
+    )
+    potential_conflicts: list[str] = Field(
+        default_factory=list, description="Files that might cause merge conflicts"
+    )
+    binary_changes: list[str] = Field(
+        default_factory=list, description="Binary files that have changed"
+    )
 
     @property
     def is_high_risk(self) -> bool:

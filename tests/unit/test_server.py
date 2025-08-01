@@ -1,7 +1,6 @@
-import pytest
 import asyncio
 
-
+import pytest
 from mcp_shared_lib.models.base.types import LogLevel
 from mcp_shared_lib.utils import logging_service
 
@@ -21,10 +20,7 @@ async def test_set_level_and_notify(caplog):
         await logging_service.notify(
             "Test debug message", LogLevel.DEBUG, "test_notify_logger"
         )
-        assert any(
-            "Test debug message" in record.message
-            for record in caplog.records
-        )
+        assert any("Test debug message" in record.message for record in caplog.records)
 
 
 @pytest.mark.asyncio

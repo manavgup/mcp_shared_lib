@@ -51,13 +51,19 @@ class LocalRepository(BaseModel):
     name: str = Field(..., description="Repository name")
     current_branch: str = Field(..., description="Current active branch")
     remote_url: str | None = Field(default=None, description="Remote origin URL")
-    remote_branches: list[str] = Field(default_factory=list, description="Remote branches")
+    remote_branches: list[str] = Field(
+        default_factory=list, description="Remote branches"
+    )
     is_dirty: bool = Field(default=False, description="Has uncommitted changes")
     is_bare: bool = Field(default=False, description="Is bare repository")
     head_commit: str = Field(..., description="HEAD commit SHA")
     upstream_branch: str | None = Field(default=None, description="Upstream branch")
-    remotes: list[GitRemote] = Field(default_factory=list, description="Repository remotes")
-    branches: list[GitBranch] = Field(default_factory=list, description="Repository branches")
+    remotes: list[GitRemote] = Field(
+        default_factory=list, description="Repository remotes"
+    )
+    branches: list[GitBranch] = Field(
+        default_factory=list, description="Repository branches"
+    )
 
     @field_validator("path")
     @classmethod

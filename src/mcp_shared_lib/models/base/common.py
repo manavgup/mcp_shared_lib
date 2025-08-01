@@ -4,7 +4,6 @@
 
 from enum import Enum
 from typing import Literal
-from mcp_shared_lib.models.base.types import LogLevel
 
 
 class GitStatusCode(Enum):
