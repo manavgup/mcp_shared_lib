@@ -59,7 +59,9 @@ class GitClient:
                     await ctx.error(
                         f"Git command failed (exit {result.returncode}): {stderr_str}"
                     )
-                raise GitCommandError(full_command, result.returncode, stderr_str) from None
+                raise GitCommandError(
+                    full_command, result.returncode, stderr_str
+                ) from None
 
             if ctx and stdout_str:
                 await ctx.debug(f"Git command output: {len(stdout_str)} characters")
