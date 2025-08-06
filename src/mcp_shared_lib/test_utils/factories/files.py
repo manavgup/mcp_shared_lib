@@ -2,114 +2,84 @@
 File-related test data factories.
 
 This module provides factories for creating realistic file changes,
-file metadata, and file system structures.
+file metadata, and file-related objects.
 """
 
 import random
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Optional, TypeVar
 
-from .base import BaseFactory, Faker
+from .base import BaseFactory, Faker, TraitMixin
+
+T = TypeVar("T")
 
 
-class FileChangeFactory(BaseFactory):
-    """Factory for creating realistic file change objects."""
+class FileChangeFactory(BaseFactory, TraitMixin):
+    """Factory for creating file change objects."""
 
     @staticmethod
     def file_path() -> str:
-        """Generate a realistic file path."""
-        # Different file types with appropriate extensions
-        file_types = {
-            "python": [".py"],
-            "javascript": [".js", ".ts", ".jsx", ".tsx"],
-            "markup": [".html", ".xml"],
-            "stylesheet": [".css", ".scss", ".sass"],
-            "config": [".json", ".yaml", ".yml", ".toml", ".ini"],
-            "documentation": [".md", ".rst", ".txt"],
-            "database": [".sql"],
-            "shell": [".sh", ".bash", ".zsh"],
-            "docker": ["Dockerfile", ".dockerignore"],
-            "ci": [".yml", ".yaml"],
-        }
+        """Generate realistic file path."""
+        # Common file patterns
+        patterns = [
+            "src/{module}/{file}.py",
+            "tests/{module}/test_{file}.py",
+            "docs/{file}.md",
+            "config/{file}.yaml",
+            "scripts/{file}.sh",
+            "data/{file}.json",
+            "static/{type}/{file}.{ext}",
+            "templates/{file}.html",
+            "migrations/{timestamp}_{file}.py",
+            "utils/{file}.py",
+        ]
 
-        # Choose file type based on realistic distribution
-        type_weights = {
-            "python": 40,
-            "javascript": 20,
-            "config": 15,
-            "documentation": 10,
-            "stylesheet": 5,
-            "markup": 4,
-            "database": 3,
-            "shell": 2,
-            "docker": 1,
-        }
+        pattern = random.choice(patterns)
+        modules = ["auth", "api", "core", "models", "services", "utils", "handlers"]
+        files = ["user", "config", "database", "validation", "helper", "manager"]
+        types = ["css", "js", "img", "fonts"]
+        exts = ["css", "js", "png", "jpg", "svg", "woff"]
 
-        file_type = Faker.weighted_choice(
-            list(type_weights.keys()), list(type_weights.values())
+        return pattern.format(
+            module=random.choice(modules),
+            file=random.choice(files),
+            type=random.choice(types),
+            ext=random.choice(exts),
+            timestamp=datetime.now().strftime("%Y%m%d_%H%M%S"),
         )
-
-        extensions = file_types[file_type]
-        extension = random.choice(extensions)
-
-        # Generate appropriate path based on file type
-        if file_type == "python":
-            return Faker.file_path(
-                depth=random.randint(2, 4), extension=extension.lstrip(".")
-            )
-        elif file_type in ["config", "docker"]:
-            return Faker.file_path(depth=1, extension=extension.lstrip("."))
-        elif file_type == "documentation":
-            if random.random() < 0.5:
-                return Faker.file_path(depth=1, extension=extension.lstrip("."))
-            else:
-                return (
-                    f"docs/{Faker.file_path(depth=1, extension=extension.lstrip('.'))}"
-                )
-        else:
-            return Faker.file_path(
-                depth=random.randint(1, 3), extension=extension.lstrip(".")
-            )
 
     @staticmethod
     def change_type() -> str:
-        """Generate change type with realistic distribution."""
-        return Faker.weighted_choice(
-            ["modified", "added", "deleted", "renamed"],
-            [70, 20, 5, 5],  # Most changes are modifications
-        )
+        """Generate change type."""
+        return Faker.random_element(["modified", "added", "deleted", "renamed"])
 
     @staticmethod
     def lines_added() -> int:
-        """Generate lines added with realistic distribution."""
-        # Most changes are small, some are medium, few are large
-        size_type = Faker.weighted_choice(["small", "medium", "large"], [70, 25, 5])
-
-        if size_type == "small":
-            return Faker.random_int(1, 20)
-        elif size_type == "medium":
-            return Faker.random_int(21, 100)
-        else:  # large
-            return Faker.random_int(101, 500)
+        """Generate lines added."""
+        # Weighted distribution: most changes are small
+        weights = [0.6, 0.25, 0.1, 0.05]
+        ranges = [(1, 10), (11, 50), (51, 200), (201, 1000)]
+        chosen_range = Faker.weighted_choice(ranges, weights)
+        return Faker.random_int(chosen_range[0], chosen_range[1])
 
     @staticmethod
     def lines_removed() -> int:
-        """Generate lines removed (usually less than added)."""
-        return Faker.random_int(0, 50)
+        """Generate lines removed."""
+        # For deletions, often remove fewer lines than added
+        if random.random() < 0.3:  # 30% chance of deletion
+            return Faker.random_int(1, 50)
+        else:
+            return Faker.random_int(0, 20)
 
     @staticmethod
     def risk_score() -> float:
-        """Generate risk score with realistic distribution."""
-        # Most changes are low-medium risk
-        return Faker.weighted_choice(
-            [Faker.pyfloat(0.0, 0.3), Faker.pyfloat(0.3, 0.7), Faker.pyfloat(0.7, 1.0)],
-            [60, 30, 10],
-        )
+        """Generate risk score (0.0 to 1.0)."""
+        return Faker.pyfloat(0.0, 1.0)
 
     @staticmethod
     def complexity_change() -> int:
-        """Generate complexity change."""
-        return Faker.random_int(-5, 15)
+        """Generate complexity change score."""
+        return Faker.random_int(-10, 20)
 
     @staticmethod
     def test_coverage() -> float:
@@ -119,7 +89,7 @@ class FileChangeFactory(BaseFactory):
     @staticmethod
     def file_size_bytes() -> int:
         """Generate file size in bytes."""
-        return Faker.random_int(100, 50000)
+        return Faker.random_int(100, 102400)  # 100B to 100KB
 
     @staticmethod
     def last_modified() -> datetime:
@@ -128,195 +98,141 @@ class FileChangeFactory(BaseFactory):
 
     @staticmethod
     def language() -> str:
-        """Determine programming language from file path."""
-        languages = {
-            ".py": "python",
-            ".js": "javascript",
-            ".ts": "typescript",
-            ".jsx": "javascript",
-            ".tsx": "typescript",
-            ".java": "java",
-            ".cpp": "cpp",
-            ".c": "c",
-            ".cs": "csharp",
-            ".php": "php",
-            ".rb": "ruby",
-            ".go": "go",
-            ".rs": "rust",
-            ".kt": "kotlin",
-            ".swift": "swift",
-            ".md": "markdown",
-            ".html": "html",
-            ".css": "css",
-            ".sql": "sql",
-            ".sh": "shell",
-            ".yaml": "yaml",
-            ".json": "json",
-        }
-        return random.choice(list(languages.values()))
+        """Generate programming language."""
+        languages = [
+            "python",
+            "javascript",
+            "typescript",
+            "java",
+            "go",
+            "rust",
+            "cpp",
+            "csharp",
+            "php",
+            "ruby",
+            "swift",
+            "kotlin",
+            "scala",
+            "dart",
+            "elixir",
+            "clojure",
+            "haskell",
+            "ocaml",
+            "fsharp",
+            "nim",
+        ]
+        return Faker.random_element(languages)
 
     @classmethod
-    def create(cls, **kwargs) -> dict[str, Any]:
+    def create(cls, **kwargs: Any) -> dict[str, Any]:
         """Create file change with computed properties."""
         change = super().create(**kwargs)
 
-        # Compute derived properties
-        change["net_lines"] = change["lines_added"] - change["lines_removed"]
-        change["change_size"] = abs(change["net_lines"])
+        # Adjust lines based on change type
+        if change["change_type"] == "added":
+            change["lines_removed"] = 0
+        elif change["change_type"] == "deleted":
+            change["lines_added"] = 0
 
-        # Adjust risk based on file characteristics
-        if change["file_path"].endswith((".json", ".yaml", ".yml", ".toml")):
-            change["risk_score"] = min(change["risk_score"] + 0.2, 1.0)
-        elif "test" in change["file_path"].lower():
-            change["risk_score"] = max(change["risk_score"] - 0.3, 0.0)
+        # Calculate total lines changed
+        change["total_lines_changed"] = change["lines_added"] + change["lines_removed"]
+
+        # Determine file type from path
+        path = change["file_path"]
+        if path.endswith((".py", ".js", ".ts", ".java", ".go", ".rs")):
+            change["file_type"] = "source"
+        elif path.endswith((".md", ".txt", ".rst")):
+            change["file_type"] = "documentation"
+        elif path.endswith((".yml", ".yaml", ".json", ".toml", ".ini")):
+            change["file_type"] = "configuration"
+        elif path.endswith((".test.", ".spec.", "test_", "_test.")):
+            change["file_type"] = "test"
+        else:
+            change["file_type"] = "other"
 
         return change
 
-    # Trait methods for different file types and scenarios
+    # Trait methods for different risk levels
     @classmethod
     def trait_high_risk(cls) -> dict[str, Any]:
-        """Trait for high-risk file changes."""
-        critical_files = [
-            "setup.py",
-            "pyproject.toml",
-            "requirements.txt",
-            "package.json",
-            "Dockerfile",
-            "docker-compose.yml",
-            ".github/workflows/ci.yml",
-            "config/production.json",
-            "src/core/auth.py",
-            "migrations/001_initial.sql",
-        ]
-
+        """Trait for high-risk changes."""
         return {
-            "file_path": random.choice(critical_files),
             "risk_score": Faker.pyfloat(0.7, 1.0),
-            "lines_added": Faker.random_int(10, 100),
-            "complexity_change": Faker.random_int(3, 10),
+            "complexity_change": Faker.random_int(5, 20),
+            "lines_added": Faker.random_int(50, 200),
+            "file_type": "source",
         }
 
     @classmethod
     def trait_low_risk(cls) -> dict[str, Any]:
-        """Trait for low-risk file changes."""
-        safe_files = [
-            "README.md",
-            "CHANGELOG.md",
-            "docs/api.md",
-            "docs/tutorial.md",
-            "tests/test_utils.py",
-            "tests/fixtures/sample_data.json",
-            ".gitignore",
-            "LICENSE",
-        ]
-
+        """Trait for low-risk changes."""
         return {
-            "file_path": random.choice(safe_files),
             "risk_score": Faker.pyfloat(0.0, 0.3),
-            "lines_added": Faker.random_int(1, 30),
-            "complexity_change": Faker.random_int(-2, 2),
+            "complexity_change": Faker.random_int(-5, 5),
+            "lines_added": Faker.random_int(1, 20),
+            "file_type": Faker.random_element(["documentation", "configuration"]),
         }
 
+    # Trait methods for different file types
     @classmethod
     def trait_source_code(cls) -> dict[str, Any]:
         """Trait for source code files."""
-        source_files = [
-            "src/analyzer.py",
-            "src/processor.py",
-            "src/utils.py",
-            "src/models/base.py",
-            "src/services/git_service.py",
-            "src/api/endpoints.py",
-            "src/cli/commands.py",
-        ]
-
         return {
-            "file_path": random.choice(source_files),
+            "file_path": f"src/{Faker.random_element(['auth', 'api', 'core'])}/{Faker.random_element(['user', 'config', 'database'])}.py",
             "language": "python",
-            "risk_score": Faker.pyfloat(0.3, 0.8),
-            "complexity_change": Faker.random_int(0, 8),
+            "file_type": "source",
+            "complexity_change": Faker.random_int(0, 15),
         }
 
     @classmethod
     def trait_test_file(cls) -> dict[str, Any]:
         """Trait for test files."""
-        test_files = [
-            "tests/test_analyzer.py",
-            "tests/test_processor.py",
-            "tests/unit/test_models.py",
-            "tests/integration/test_workflow.py",
-            "tests/fixtures/sample_data.py",
-        ]
-
         return {
-            "file_path": random.choice(test_files),
+            "file_path": f"tests/{Faker.random_element(['unit', 'integration'])}/test_{Faker.random_element(['user', 'config', 'database'])}.py",
             "language": "python",
-            "risk_score": Faker.pyfloat(0.0, 0.4),
-            "test_coverage": 1.0,
-            "complexity_change": Faker.random_int(0, 5),
+            "file_type": "test",
+            "test_coverage": Faker.pyfloat(0.8, 1.0),
         }
 
     @classmethod
     def trait_documentation(cls) -> dict[str, Any]:
         """Trait for documentation files."""
-        doc_files = [
-            "README.md",
-            "docs/api.md",
-            "docs/tutorial.md",
-            "docs/setup.md",
-            "CHANGELOG.md",
-            "CONTRIBUTING.md",
-            "CODE_OF_CONDUCT.md",
-        ]
-
         return {
-            "file_path": random.choice(doc_files),
+            "file_path": f"docs/{Faker.random_element(['user_guide', 'api_reference', 'deployment'])}.md",
             "language": "markdown",
+            "file_type": "documentation",
             "risk_score": Faker.pyfloat(0.0, 0.2),
-            "complexity_change": 0,
-            "lines_added": Faker.random_int(5, 100),
         }
 
     @classmethod
     def trait_configuration(cls) -> dict[str, Any]:
         """Trait for configuration files."""
-        config_files = [
-            "pyproject.toml",
-            "setup.cfg",
-            "tox.ini",
-            ".pre-commit-config.yaml",
-            "docker-compose.yml",
-            "Dockerfile",
-            ".github/workflows/test.yml",
-            "config/development.json",
-            "config/production.yaml",
-        ]
-
         return {
-            "file_path": random.choice(config_files),
-            "risk_score": Faker.pyfloat(0.6, 1.0),
-            "lines_added": Faker.random_int(2, 50),
-            "complexity_change": Faker.random_int(0, 3),
+            "file_path": f"config/{Faker.random_element(['database', 'app', 'logging'])}.yaml",
+            "language": "yaml",
+            "file_type": "configuration",
+            "risk_score": Faker.pyfloat(0.1, 0.4),
         }
 
+    # Trait methods for change sizes
     @classmethod
     def trait_large_change(cls) -> dict[str, Any]:
-        """Trait for large file changes."""
+        """Trait for large changes."""
         return {
-            "lines_added": Faker.random_int(200, 1000),
-            "lines_removed": Faker.random_int(50, 300),
-            "complexity_change": Faker.random_int(5, 20),
-            "risk_score": Faker.pyfloat(0.5, 0.9),
+            "lines_added": Faker.random_int(100, 500),
+            "lines_removed": Faker.random_int(20, 100),
+            "complexity_change": Faker.random_int(10, 30),
+            "risk_score": Faker.pyfloat(0.5, 1.0),
         }
 
     @classmethod
     def trait_small_change(cls) -> dict[str, Any]:
-        """Trait for small file changes."""
+        """Trait for small changes."""
         return {
             "lines_added": Faker.random_int(1, 10),
             "lines_removed": Faker.random_int(0, 5),
-            "complexity_change": Faker.random_int(-1, 2),
-            "risk_score": Faker.pyfloat(0.0, 0.4),
+            "complexity_change": Faker.random_int(-2, 2),
+            "risk_score": Faker.pyfloat(0.0, 0.3),
         }
 
 
@@ -389,7 +305,7 @@ class FileMetadataFactory(BaseFactory):
 def create_file_changes(
     count: int = 5,
     risk_distribution: str = "mixed",
-    change_types: list[str] = None,
+    change_types: Optional[list[str]] = None,
     **kwargs,
 ) -> list[dict[str, Any]]:
     """
@@ -503,22 +419,40 @@ def create_diff_summary(file_changes: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def create_file_changes_by_category() -> dict[str, list[dict[str, Any]]]:
-    """Create file changes organized by category."""
-    return {
-        "source_code": [
-            FileChangeFactory.with_traits("source_code")
-            for _ in range(Faker.random_int(2, 8))
-        ],
-        "tests": [
-            FileChangeFactory.with_traits("test_file")
-            for _ in range(Faker.random_int(1, 5))
-        ],
-        "documentation": [
-            FileChangeFactory.with_traits("documentation")
-            for _ in range(Faker.random_int(0, 3))
-        ],
-        "configuration": [
-            FileChangeFactory.with_traits("configuration")
-            for _ in range(Faker.random_int(0, 2))
-        ],
+    """Create file changes categorized by type."""
+    categories: dict[str, list[dict[str, Any]]] = {
+        "source": [],
+        "test": [],
+        "documentation": [],
+        "configuration": [],
+        "other": [],
     }
+
+    # Create changes for each category
+    for category in categories:
+        if category == "source":
+            changes = [
+                FileChangeFactory.with_traits("source_code")
+                for _ in range(random.randint(3, 8))
+            ]
+        elif category == "test":
+            changes = [
+                FileChangeFactory.with_traits("test_file")
+                for _ in range(random.randint(2, 5))
+            ]
+        elif category == "documentation":
+            changes = [
+                FileChangeFactory.with_traits("documentation")
+                for _ in range(random.randint(1, 4))
+            ]
+        elif category == "configuration":
+            changes = [
+                FileChangeFactory.with_traits("configuration")
+                for _ in range(random.randint(1, 3))
+            ]
+        else:
+            changes = [FileChangeFactory.create() for _ in range(random.randint(1, 3))]
+
+        categories[category] = changes
+
+    return categories

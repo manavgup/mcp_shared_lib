@@ -1,34 +1,35 @@
 """
 Git-related test data factories.
 
-This module provides factories for creating realistic git objects like
-commits, branches, and repository states.
+This module provides factories for creating realistic git objects
+including commits, branches, repository states, and diffs.
 """
 
-import random
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, TypeVar
 
-from .base import BaseFactory, Faker, SequenceMixin, generate_commit_message
+from .base import BaseFactory, Faker, SequenceMixin, TraitMixin
+
+T = TypeVar("T")
 
 
-class GitCommitFactory(BaseFactory, SequenceMixin):
-    """Factory for creating realistic git commit objects."""
+class GitCommitFactory(BaseFactory, SequenceMixin, TraitMixin):
+    """Factory for creating git commit objects."""
 
     @staticmethod
     def hash() -> str:
-        """Generate a realistic git commit hash."""
+        """Generate commit hash."""
         return Faker.hex_string(40)
 
     @staticmethod
     def short_hash() -> str:
-        """Generate a short git commit hash."""
-        return Faker.hex_string(8)
+        """Generate short commit hash."""
+        return Faker.hex_string(7)
 
     @staticmethod
     def message() -> str:
-        """Generate a realistic commit message."""
-        return generate_commit_message()
+        """Generate commit message."""
+        return Faker.sentence(nb_words=6)
 
     @staticmethod
     def author_name() -> str:
@@ -48,220 +49,247 @@ class GitCommitFactory(BaseFactory, SequenceMixin):
     @staticmethod
     def files_changed() -> int:
         """Generate number of files changed."""
-        return Faker.random_int(1, 8)
+        return Faker.random_int(1, 20)
 
     @staticmethod
     def lines_added() -> int:
         """Generate lines added."""
-        return Faker.random_int(1, 150)
+        return Faker.random_int(0, 200)
 
     @staticmethod
     def lines_removed() -> int:
         """Generate lines removed."""
-        return Faker.random_int(0, 75)
+        return Faker.random_int(0, 100)
 
-    # Trait methods for different commit types
     @classmethod
     def trait_feature(cls) -> dict[str, Any]:
         """Trait for feature commits."""
         return {
-            "message": generate_commit_message("feat"),
-            "lines_added": Faker.random_int(20, 200),
-            "files_changed": Faker.random_int(2, 8),
+            "message": f"feat: {Faker.sentence(nb_words=4)}",
+            "files_changed": Faker.random_int(3, 15),
+            "lines_added": Faker.random_int(20, 150),
         }
 
     @classmethod
     def trait_bugfix(cls) -> dict[str, Any]:
         """Trait for bugfix commits."""
         return {
-            "message": generate_commit_message("fix"),
+            "message": f"fix: {Faker.sentence(nb_words=4)}",
+            "files_changed": Faker.random_int(1, 8),
             "lines_added": Faker.random_int(5, 50),
-            "lines_removed": Faker.random_int(1, 20),
-            "files_changed": Faker.random_int(1, 3),
         }
 
     @classmethod
     def trait_docs(cls) -> dict[str, Any]:
         """Trait for documentation commits."""
         return {
-            "message": generate_commit_message("docs"),
-            "lines_added": Faker.random_int(5, 100),
-            "files_changed": Faker.random_int(1, 3),
+            "message": f"docs: {Faker.sentence(nb_words=4)}",
+            "files_changed": Faker.random_int(1, 5),
+            "lines_added": Faker.random_int(10, 100),
         }
 
     @classmethod
     def trait_large(cls) -> dict[str, Any]:
         """Trait for large commits."""
         return {
-            "lines_added": Faker.random_int(200, 1000),
-            "lines_removed": Faker.random_int(50, 300),
-            "files_changed": Faker.random_int(10, 25),
+            "files_changed": Faker.random_int(10, 30),
+            "lines_added": Faker.random_int(100, 500),
+            "lines_removed": Faker.random_int(20, 100),
         }
 
     @classmethod
     def trait_small(cls) -> dict[str, Any]:
         """Trait for small commits."""
         return {
+            "files_changed": Faker.random_int(1, 3),
             "lines_added": Faker.random_int(1, 20),
             "lines_removed": Faker.random_int(0, 10),
-            "files_changed": Faker.random_int(1, 3),
         }
 
+    @classmethod
+    def create(cls, **kwargs: Any) -> dict[str, Any]:
+        """Create git commit with computed properties."""
+        commit = super().create(**kwargs)
 
-class GitBranchFactory(BaseFactory):
+        # Add computed properties
+        commit["short_hash"] = commit["hash"][:7]
+        commit["author_date"] = commit["timestamp"]
+        commit["committer_date"] = commit["timestamp"]
+        commit["committer_name"] = commit["author_name"]
+        commit["committer_email"] = commit["author_email"]
+
+        # Add commit metadata
+        commit["metadata"] = {
+            "branch": Faker.random_element(["main", "develop", "feature/auth"]),
+            "tags": [],
+            "parents": [],
+            "tree_hash": Faker.hex_string(40),
+        }
+
+        return commit
+
+
+class GitBranchFactory(BaseFactory, TraitMixin):
     """Factory for creating git branch objects."""
 
     @staticmethod
     def name() -> str:
-        """Generate a realistic branch name."""
-        branch_types = ["feature", "bugfix", "hotfix", "release", "develop"]
-        descriptors = [
-            "auth",
-            "api",
-            "ui",
-            "database",
-            "performance",
-            "security",
-            "user-management",
-            "data-processing",
-            "error-handling",
+        """Generate branch name."""
+        branch_types = [
+            "main",
+            "develop",
+            "feature/user-auth",
+            "feature/api-endpoints",
+            "bugfix/login-issue",
+            "hotfix/security-patch",
+            "release/v1.2.0",
+            "chore/dependency-update",
+            "docs/api-reference",
+            "test/coverage-improvement",
         ]
-
-        branch_type = random.choice(branch_types)
-        descriptor = random.choice(descriptors)
-        number = random.randint(1, 999)
-
-        if branch_type in ["develop", "main", "master"]:
-            return branch_type
-        elif branch_type == "release":
-            major = random.randint(1, 3)
-            minor = random.randint(0, 9)
-            patch = random.randint(0, 9)
-            return f"{branch_type}/v{major}.{minor}.{patch}"
-        else:
-            return f"{branch_type}/{descriptor}-{number}"
+        return Faker.random_element(branch_types)
 
     @staticmethod
     def commit_hash() -> str:
-        """Generate commit hash for branch HEAD."""
-        return GitCommitFactory.hash()
+        """Generate commit hash."""
+        return Faker.hex_string(40)
 
     @staticmethod
     def is_remote() -> bool:
-        """Whether branch exists on remote."""
-        return Faker.weighted_choice([True, False], [0.7, 0.3])
+        """Generate remote flag."""
+        return Faker.random_element([True, False])
 
     @staticmethod
     def ahead_by() -> int:
-        """Commits ahead of main/develop."""
-        return Faker.random_int(0, 10)
+        """Generate ahead count."""
+        return Faker.random_int(0, 20)
 
     @staticmethod
     def behind_by() -> int:
-        """Commits behind main/develop."""
-        return Faker.random_int(0, 5)
+        """Generate behind count."""
+        return Faker.random_int(0, 50)
 
     @staticmethod
     def last_commit_date() -> datetime:
-        """Last commit date on this branch."""
+        """Generate last commit date."""
         return Faker.date_time()
 
-    # Trait methods
     @classmethod
     def trait_main_branch(cls) -> dict[str, Any]:
-        """Trait for main/master branches."""
+        """Trait for main branch."""
         return {
-            "name": random.choice(["main", "master"]),
+            "name": "main",
+            "is_remote": False,
+            "ahead_by": 0,
             "behind_by": 0,
-            "is_remote": True,
         }
 
     @classmethod
     def trait_feature_branch(cls) -> dict[str, Any]:
-        """Trait for feature branches."""
-        features = ["auth", "api", "ui", "dashboard", "reporting", "integration"]
-        feature = random.choice(features)
+        """Trait for feature branch."""
         return {
-            "name": f"feature/{feature}-{random.randint(100, 999)}",
+            "name": f"feature/{Faker.random_element(['auth', 'api', 'ui', 'db'])}-{Faker.random_element(['login', 'search', 'profile', 'settings'])}",
+            "is_remote": True,
             "ahead_by": Faker.random_int(1, 15),
-            "behind_by": Faker.random_int(0, 3),
+            "behind_by": Faker.random_int(0, 10),
         }
 
     @classmethod
     def trait_stale_branch(cls) -> dict[str, Any]:
-        """Trait for stale/old branches."""
+        """Trait for stale branch."""
         return {
-            "last_commit_date": datetime.now()
-            - timedelta(days=random.randint(30, 180)),
-            "behind_by": Faker.random_int(10, 50),
+            "name": f"feature/old-{Faker.random_element(['feature', 'bugfix', 'chore'])}",
+            "is_remote": True,
+            "ahead_by": 0,
+            "behind_by": Faker.random_int(20, 100),
         }
 
+    @classmethod
+    def create(cls, **kwargs: Any) -> dict[str, Any]:
+        """Create git branch with computed properties."""
+        branch = super().create(**kwargs)
 
-class GitRepositoryStateFactory(BaseFactory):
-    """Factory for creating complete git repository state."""
+        # Add computed properties
+        branch["is_current"] = Faker.random_element([True, False])
+        branch["last_commit_message"] = Faker.sentence(nb_words=6)
+        branch["last_commit_author"] = Faker.name()
+
+        # Add branch metadata
+        branch["metadata"] = {
+            "created_at": branch["last_commit_date"]
+            - timedelta(days=Faker.random_int(1, 365)),
+            "upstream": None if not branch["is_remote"] else f"origin/{branch['name']}",
+            "tracking": branch["is_remote"],
+        }
+
+        return branch
+
+
+class GitRepositoryStateFactory(BaseFactory, TraitMixin):
+    """Factory for creating git repository state objects."""
 
     @staticmethod
     def current_branch() -> str:
-        """Current active branch."""
-        return GitBranchFactory.name()
+        """Generate current branch name."""
+        return Faker.random_element(["main", "develop", "feature/user-auth"])
 
     @staticmethod
     def default_branch() -> str:
-        """Default repository branch."""
-        return random.choice(["main", "master", "develop"])
+        """Generate default branch name."""
+        return Faker.random_element(["main", "master"])
 
     @staticmethod
     def is_dirty() -> bool:
-        """Whether repository has uncommitted changes."""
-        return Faker.weighted_choice([True, False], [0.6, 0.4])
+        """Generate dirty state."""
+        return Faker.random_element([True, False])
 
     @staticmethod
     def total_commits() -> int:
-        """Total commits in repository."""
+        """Generate total commits."""
         return Faker.random_int(10, 1000)
 
     @staticmethod
     def total_branches() -> int:
-        """Total number of branches."""
-        return Faker.random_int(1, 10)
+        """Generate total branches."""
+        return Faker.random_int(2, 20)
 
     @staticmethod
     def stash_count() -> int:
-        """Number of stash entries."""
+        """Generate stash count."""
         return Faker.random_int(0, 5)
 
     @staticmethod
     def ahead_by() -> int:
-        """Commits ahead of remote."""
+        """Generate ahead count."""
         return Faker.random_int(0, 10)
 
     @staticmethod
     def behind_by() -> int:
-        """Commits behind remote."""
-        return Faker.random_int(0, 5)
+        """Generate behind count."""
+        return Faker.random_int(0, 20)
 
     @staticmethod
     def remote_url() -> str:
-        """Repository remote URL."""
-        return Faker.url()
+        """Generate remote URL."""
+        return f"https://github.com/{Faker.random_element(['user', 'org', 'company'])}/{Faker.random_element(['repo', 'project', 'app'])}.git"
 
     @staticmethod
     def last_commit_hash() -> str:
-        """Last commit hash."""
-        return GitCommitFactory.hash()
+        """Generate last commit hash."""
+        return Faker.hex_string(40)
 
     @staticmethod
     def last_commit_message() -> str:
-        """Last commit message."""
-        return GitCommitFactory.message()
+        """Generate last commit message."""
+        return Faker.sentence(nb_words=6)
 
     @staticmethod
     def last_commit_date() -> datetime:
-        """Last commit date."""
+        """Generate last commit date."""
         return Faker.date_time()
 
     @classmethod
-    def create(cls, **kwargs) -> dict[str, Any]:
+    def create(cls, **kwargs: Any) -> dict[str, Any]:
         """Create repository state with related objects."""
         state = super().create(**kwargs)
 

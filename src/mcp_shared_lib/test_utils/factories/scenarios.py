@@ -1,67 +1,63 @@
 """
-Test scenario factories for creating complex, realistic test environments.
+Scenario-related test data factories.
 
-This module provides factories for creating comprehensive test scenarios
-that combine multiple components (git, files, analysis, etc.) into
-realistic testing environments.
+This module provides factories for creating realistic test scenarios,
+workflow states, and integration test data.
 """
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Optional, TypeVar
 
-from .analysis import AnalysisResultFactory, RiskAssessmentFactory
 from .base import BaseFactory, Faker
 from .files import create_file_changes
 from .git import GitRepositoryStateFactory
 from .recommendations import create_pr_recommendation_set
 
+T = TypeVar("T")
+
 
 class TestScenarioFactory(BaseFactory):
-    """Factory for creating comprehensive test scenarios."""
+    """Factory for creating test scenario objects."""
 
     @staticmethod
     def scenario_name() -> str:
         """Generate scenario name."""
-        return Faker.random_element(
-            [
-                "simple_feature_addition",
-                "complex_refactoring",
-                "bug_fix_with_tests",
-                "documentation_update",
-                "performance_optimization",
-                "security_enhancement",
-                "database_migration",
-                "api_breaking_change",
-                "ui_overhaul",
-                "integration_update",
-            ]
-        )
+        scenarios = [
+            "simple_feature_addition",
+            "complex_refactoring",
+            "bug_fix_with_tests",
+            "performance_optimization",
+            "security_patch",
+            "documentation_update",
+            "dependency_upgrade",
+            "test_coverage_improvement",
+            "code_style_cleanup",
+            "architecture_refactoring",
+        ]
+        return Faker.random_element(scenarios)
 
     @staticmethod
     def complexity_level() -> str:
         """Generate complexity level."""
-        return Faker.weighted_choice(
-            ["simple", "moderate", "complex", "very_complex"], [30, 40, 25, 5]
-        )
+        return Faker.random_element(["simple", "moderate", "complex", "very_complex"])
 
     @staticmethod
     def expected_duration_hours() -> int:
-        """Generate expected scenario duration."""
+        """Generate expected duration."""
         return Faker.random_int(1, 40)
 
     @staticmethod
     def team_size() -> int:
-        """Generate team size for scenario."""
+        """Generate team size."""
         return Faker.random_int(1, 8)
 
     @classmethod
-    def create(cls, **kwargs) -> dict[str, Any]:
-        """Create comprehensive test scenario."""
+    def create(cls, **kwargs: Any) -> dict[str, Any]:
+        """Create test scenario with computed properties."""
         scenario = super().create(**kwargs)
 
-        # Generate scenario-specific data based on complexity
-        complexity = scenario["complexity_level"]
-
+        # Add scenario-specific data based on complexity
+        complexity = scenario.get("complexity_level", "moderate")
         if complexity == "simple":
             scenario.update(cls._create_simple_scenario())
         elif complexity == "moderate":
@@ -71,161 +67,105 @@ class TestScenarioFactory(BaseFactory):
         else:  # very_complex
             scenario.update(cls._create_very_complex_scenario())
 
-        # Add common scenario metadata
-        scenario["created_at"] = datetime.now()
-        scenario["scenario_id"] = Faker.uuid4()
-
         return scenario
 
     @classmethod
     def _create_simple_scenario(cls) -> dict[str, Any]:
-        """Create a simple scenario."""
+        """Create simple scenario data."""
         return {
-            "file_changes": create_file_changes(
-                count=Faker.random_int(1, 5), risk_distribution="low"
-            ),
-            "repository_state": GitRepositoryStateFactory.with_traits("clean"),
-            "analysis_result": AnalysisResultFactory.with_traits("successful_analysis"),
-            "expected_prs": 1,
             "estimated_review_time_hours": Faker.random_int(1, 4),
-            "risk_factors": ["minimal_risk"],
-            "success_criteria": [
-                "All tests pass",
-                "No merge conflicts",
-                "Code review approved",
-            ],
+            "files_affected": Faker.random_int(1, 5),
+            "risk_level": "low",
+            "testing_requirements": ["unit_tests"],
+            "approval_required": False,
         }
 
     @classmethod
     def _create_moderate_scenario(cls) -> dict[str, Any]:
-        """Create a moderate complexity scenario."""
+        """Create moderate scenario data."""
         return {
-            "file_changes": create_file_changes(
-                count=Faker.random_int(5, 15), risk_distribution="mixed"
-            ),
-            "repository_state": GitRepositoryStateFactory.create(),
-            "analysis_result": AnalysisResultFactory.create(),
-            "expected_prs": Faker.random_int(2, 4),
             "estimated_review_time_hours": Faker.random_int(4, 12),
-            "risk_factors": ["moderate_complexity", "multiple_files"],
-            "success_criteria": [
-                "All tests pass",
-                "Performance benchmarks met",
-                "Security review completed",
-                "Documentation updated",
-            ],
+            "files_affected": Faker.random_int(5, 15),
+            "risk_level": "medium",
+            "testing_requirements": ["unit_tests", "integration_tests"],
+            "approval_required": True,
         }
 
     @classmethod
     def _create_complex_scenario(cls) -> dict[str, Any]:
-        """Create a complex scenario."""
+        """Create complex scenario data."""
         return {
-            "file_changes": create_file_changes(
-                count=Faker.random_int(15, 30), risk_distribution="mixed"
-            ),
-            "repository_state": GitRepositoryStateFactory.with_traits("dirty"),
-            "analysis_result": AnalysisResultFactory.with_traits(
-                "analysis_with_warnings"
-            ),
-            "expected_prs": Faker.random_int(4, 8),
             "estimated_review_time_hours": Faker.random_int(12, 24),
-            "risk_factors": [
-                "high_complexity",
-                "critical_files_modified",
-                "external_dependencies",
-                "breaking_changes",
+            "files_affected": Faker.random_int(15, 50),
+            "risk_level": "high",
+            "testing_requirements": [
+                "unit_tests",
+                "integration_tests",
+                "performance_tests",
             ],
-            "success_criteria": [
-                "All tests pass",
-                "Integration tests pass",
-                "Performance impact assessed",
-                "Security audit completed",
-                "Rollback plan prepared",
-                "Stakeholder approval obtained",
-            ],
+            "approval_required": True,
         }
 
     @classmethod
     def _create_very_complex_scenario(cls) -> dict[str, Any]:
-        """Create a very complex scenario."""
+        """Create very complex scenario data."""
         return {
-            "file_changes": create_file_changes(
-                count=Faker.random_int(30, 60), risk_distribution="high"
-            ),
-            "repository_state": GitRepositoryStateFactory.with_traits("large"),
-            "analysis_result": AnalysisResultFactory.with_traits("failed_analysis"),
-            "expected_prs": Faker.random_int(8, 15),
-            "estimated_review_time_hours": Faker.random_int(24, 80),
-            "risk_factors": [
-                "very_high_complexity",
-                "architectural_changes",
-                "database_schema_changes",
-                "api_breaking_changes",
-                "multi_service_impact",
-                "performance_critical",
+            "estimated_review_time_hours": Faker.random_int(24, 48),
+            "files_affected": Faker.random_int(50, 200),
+            "risk_level": "critical",
+            "testing_requirements": [
+                "unit_tests",
+                "integration_tests",
+                "performance_tests",
+                "security_tests",
             ],
-            "success_criteria": [
-                "All tests pass",
-                "Integration tests pass",
-                "End-to-end tests pass",
-                "Performance benchmarks met",
-                "Security audit passed",
-                "Architecture review approved",
-                "Database migration tested",
-                "Rollback procedures verified",
-                "Monitoring and alerting updated",
-                "Documentation comprehensive",
-            ],
+            "approval_required": True,
         }
 
 
 class WorkflowScenarioFactory(BaseFactory):
-    """Factory for creating workflow-specific test scenarios."""
+    """Factory for creating workflow scenario objects."""
 
     @staticmethod
     def workflow_type() -> str:
         """Generate workflow type."""
-        return Faker.random_element(
-            [
-                "feature_development",
-                "hotfix_deployment",
-                "release_preparation",
-                "maintenance_update",
-                "emergency_patch",
-                "refactoring_sprint",
-                "security_update",
-            ]
-        )
+        workflows = [
+            "code_review",
+            "continuous_integration",
+            "deployment",
+            "testing",
+            "documentation",
+            "security_audit",
+            "performance_testing",
+            "dependency_management",
+        ]
+        return Faker.random_element(workflows)
 
     @staticmethod
     def stage() -> str:
-        """Generate current workflow stage."""
-        return Faker.random_element(
-            [
-                "planning",
-                "development",
-                "testing",
-                "review",
-                "staging",
-                "deployment",
-                "monitoring",
-                "complete",
-            ]
-        )
+        """Generate workflow stage."""
+        stages = [
+            "planning",
+            "development",
+            "review",
+            "testing",
+            "deployment",
+            "monitoring",
+            "maintenance",
+            "cleanup",
+        ]
+        return Faker.random_element(stages)
 
     @classmethod
-    def create(cls, **kwargs) -> dict[str, Any]:
-        """Create workflow scenario with stage-specific data."""
-        scenario = super().create(**kwargs)
-
-        workflow_type = scenario["workflow_type"]
-        stage = scenario["stage"]
+    def create(cls, **kwargs: Any) -> dict[str, Any]:
+        """Create workflow scenario with computed properties."""
+        workflow = super().create(**kwargs)
 
         # Add workflow-specific data
-        scenario.update(cls._get_workflow_data(workflow_type))
-        scenario.update(cls._get_stage_data(stage))
+        workflow.update(cls._get_workflow_data(workflow["workflow_type"]))
+        workflow.update(cls._get_stage_data(workflow["stage"]))
 
-        return scenario
+        return workflow
 
     @classmethod
     def _get_workflow_data(cls, workflow_type: str) -> dict[str, Any]:
@@ -328,12 +268,14 @@ def create_repository_with_realistic_state(
     # )
 
     # Add risk assessment for current state
-    repo["risk_assessment"] = RiskAssessmentFactory.create()
+    repo["risk_assessment"] = create_pr_recommendation_set(
+        count=1
+    )  # Assuming RiskAssessmentFactory is no longer used
 
     return repo
 
 
-def create_scenario_suite(scenario_types: list[str] = None) -> dict[str, Any]:
+def create_scenario_suite(scenario_types: Optional[list[str]] = None) -> dict[str, Any]:
     """Create a comprehensive suite of test scenarios."""
     if scenario_types is None:
         scenario_types = [
@@ -372,7 +314,7 @@ def create_scenario_suite(scenario_types: list[str] = None) -> dict[str, Any]:
 
 
 def create_integration_test_scenario(
-    services: list[str] = None, data_flows: list[str] = None
+    services: Optional[list[str]] = None, data_flows: Optional[list[str]] = None
 ) -> dict[str, Any]:
     """Create scenario for integration testing across services."""
     if services is None:

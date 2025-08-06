@@ -44,7 +44,7 @@ class TransportConfig(BaseModel):
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
 
     @classmethod
-    def from_env(cls):
+    def from_env(cls) -> "TransportConfig":
         ttype = os.environ.get("MCP_TRANSPORT", "stdio")
         http = None
         websocket = None
@@ -78,7 +78,7 @@ class TransportConfig(BaseModel):
         return cls(type=ttype, http=http, websocket=websocket, sse=sse, logging=logging)
 
     @classmethod
-    def from_file(cls, path):
+    def from_file(cls, path: str) -> "TransportConfig":
         with open(path) as f:
             data = yaml.safe_load(f)
         ttype = data.get("transport", {}).get("type", "stdio")

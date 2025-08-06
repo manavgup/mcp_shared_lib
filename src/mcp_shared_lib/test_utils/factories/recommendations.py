@@ -7,12 +7,14 @@ and recommendation-related objects.
 
 import random
 from datetime import datetime
-from typing import Any
+from typing import Any, TypeVar
 
-from .base import BaseFactory, Faker, SequenceMixin
+from .base import BaseFactory, Faker, SequenceMixin, TraitMixin
+
+T = TypeVar("T")
 
 
-class PRRecommendationFactory(BaseFactory, SequenceMixin):
+class PRRecommendationFactory(BaseFactory, SequenceMixin, TraitMixin):
     """Factory for creating PR recommendation objects."""
 
     @classmethod
@@ -51,7 +53,7 @@ class PRRecommendationFactory(BaseFactory, SequenceMixin):
         return Faker.random_int(10, 500)
 
     @classmethod
-    def create(cls, **kwargs) -> dict[str, Any]:
+    def create(cls, **kwargs: Any) -> dict[str, Any]:
         """Create PR recommendation with computed properties."""
         rec = super().create(**kwargs)
 
@@ -111,14 +113,14 @@ class PRRecommendationFactory(BaseFactory, SequenceMixin):
         """Trait for documentation PRs."""
         return {
             "title": f"docs: {Faker.sentence(nb_words=4)}",
-            "priority": "low",
-            "estimated_effort": "small",
+            "priority": Faker.random_element(["low", "medium"]),
+            "estimated_effort": Faker.random_element(["small", "medium"]),
             "file_count": Faker.random_int(1, 3),
         }
 
     @classmethod
     def trait_refactor_pr(cls) -> dict[str, Any]:
-        """Trait for refactoring PRs."""
+        """Trait for refactor PRs."""
         return {
             "title": f"refactor: {Faker.sentence(nb_words=4)}",
             "priority": Faker.random_element(["medium", "high"]),
@@ -131,9 +133,9 @@ class PRRecommendationFactory(BaseFactory, SequenceMixin):
         """Trait for test PRs."""
         return {
             "title": f"test: {Faker.sentence(nb_words=4)}",
-            "priority": "medium",
-            "estimated_effort": "medium",
-            "file_count": Faker.random_int(1, 6),
+            "priority": Faker.random_element(["low", "medium"]),
+            "estimated_effort": Faker.random_element(["small", "medium"]),
+            "file_count": Faker.random_int(1, 4),
         }
 
 
@@ -166,23 +168,25 @@ class RecommendationGroupFactory(BaseFactory):
         return Faker.random_int(1, 14)
 
     @classmethod
-    def create(cls, **kwargs) -> dict[str, Any]:
-        """Create recommendation group with PRs."""
+    def create(cls, **kwargs: Any) -> dict[str, Any]:
+        """Create recommendation group with computed properties."""
         group = super().create(**kwargs)
 
-        # Generate PRs for this group
-        pr_count = Faker.random_int(2, 6)
-        group["recommendations"] = [
-            PRRecommendationFactory.create() for _ in range(pr_count)
-        ]
+        # Add computed properties
+        group["estimated_completion_hours"] = group["estimated_completion_days"] * 8
+        group["complexity_score"] = Faker.pyfloat(0.1, 1.0)
+        group["risk_level"] = Faker.random_element(["low", "medium", "high"])
 
-        # Calculate group metrics
-        group["total_files"] = sum(
-            pr.get("file_count", 0) for pr in group["recommendations"]
-        )
-        group["total_lines"] = sum(
-            pr.get("total_lines_changed", 0) for pr in group["recommendations"]
-        )
+        # Add group metadata
+        group["metadata"] = {
+            "created_at": datetime.now(),
+            "last_updated": datetime.now(),
+            "assigned_team": Faker.random_element(
+                ["frontend", "backend", "devops", "qa"]
+            ),
+            "dependencies": [],
+            "blockers": [],
+        }
 
         return group
 
@@ -241,13 +245,13 @@ def create_recommendation_summary(
         return {"total_prs": 0, "summary": "No recommendations available"}
 
     # Count by type
-    type_counts = {}
+    type_counts: dict[str, int] = {}
     for rec in recommendations:
         pr_type = rec.get("pr_type", "other")
         type_counts[pr_type] = type_counts.get(pr_type, 0) + 1
 
     # Count by priority
-    priority_counts = {}
+    priority_counts: dict[str, int] = {}
     for rec in recommendations:
         priority = rec.get("priority", "medium")
         priority_counts[priority] = priority_counts.get(priority, 0) + 1

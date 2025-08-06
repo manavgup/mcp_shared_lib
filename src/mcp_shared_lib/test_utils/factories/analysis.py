@@ -2,148 +2,135 @@
 Analysis-related test data factories.
 
 This module provides factories for creating realistic analysis results,
-risk assessments, and quality metrics.
+risk assessments, quality metrics, and performance data.
 """
 
 import random
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Optional, TypeVar
 
-from .base import BaseFactory, Faker, SequenceMixin
+from .base import BaseFactory, Faker, SequenceMixin, TraitMixin
+
+T = TypeVar("T")
 
 
-class AnalysisResultFactory(BaseFactory, SequenceMixin):
-    """Factory for creating comprehensive analysis results."""
+class AnalysisResultFactory(BaseFactory, SequenceMixin, TraitMixin):
+    """Factory for creating analysis result objects."""
 
     @classmethod
     def id(cls) -> str:
         """Generate unique analysis ID."""
-        return cls.sequence("analysis", "analysis_{n:06d}")
+        return cls.sequence("analysis", "analysis_{n:08d}")
 
     @staticmethod
     def timestamp() -> datetime:
-        """Analysis timestamp."""
+        """Generate analysis timestamp."""
         return Faker.date_time()
 
     @staticmethod
     def status() -> str:
-        """Analysis status with realistic distribution."""
-        return Faker.weighted_choice(
-            ["success", "warning", "error", "partial"], [70, 20, 5, 5]
-        )
+        """Generate analysis status."""
+        return Faker.random_element(["success", "warning", "error", "partial"])
 
     @staticmethod
     def duration_ms() -> int:
-        """Analysis duration in milliseconds."""
+        """Generate analysis duration."""
         return Faker.random_int(100, 30000)
 
     @staticmethod
     def files_analyzed() -> int:
-        """Number of files analyzed."""
-        return Faker.random_int(1, 100)
+        """Generate number of files analyzed."""
+        return Faker.random_int(1, 1000)
 
     @staticmethod
     def issues_found() -> int:
-        """Number of issues found."""
+        """Generate number of issues found."""
         return Faker.random_int(0, 50)
 
     @staticmethod
     def warnings_count() -> int:
-        """Number of warnings."""
+        """Generate number of warnings."""
         return Faker.random_int(0, 20)
 
     @staticmethod
     def errors_count() -> int:
-        """Number of errors."""
+        """Generate number of errors."""
         return Faker.random_int(0, 10)
 
     @staticmethod
     def overall_risk_score() -> float:
-        """Overall risk score."""
+        """Generate overall risk score."""
         return Faker.pyfloat(0.0, 1.0)
 
     @staticmethod
     def complexity_score() -> float:
-        """Code complexity score."""
+        """Generate complexity score."""
         return Faker.pyfloat(0.0, 1.0)
 
     @staticmethod
     def maintainability_score() -> float:
-        """Code maintainability score."""
+        """Generate maintainability score."""
         return Faker.pyfloat(0.0, 1.0)
 
     @staticmethod
     def test_coverage() -> float:
-        """Test coverage percentage."""
+        """Generate test coverage percentage."""
         return Faker.pyfloat(0.0, 1.0)
 
     @classmethod
-    def create(cls, **kwargs) -> dict[str, Any]:
+    def create(cls, **kwargs: Any) -> dict[str, Any]:
         """Create analysis result with computed properties."""
         result = super().create(**kwargs)
 
-        # Generate summary based on status
-        if result["status"] == "success":
-            result[
-                "summary"
-            ] = f"Analysis completed successfully. {result['files_analyzed']} files analyzed, {result['issues_found']} issues found."
-        elif result["status"] == "warning":
-            result[
-                "summary"
-            ] = f"Analysis completed with {result['warnings_count']} warnings."
-        elif result["status"] == "error":
-            result["summary"] = f"Analysis failed with {result['errors_count']} errors."
-        else:
-            result[
-                "summary"
-            ] = f"Analysis partially completed. {result['files_analyzed']} files processed."
+        # Add computed metrics
+        result["success_rate"] = (
+            (result["files_analyzed"] - result["errors_count"])
+            / result["files_analyzed"]
+            if result["files_analyzed"] > 0
+            else 0.0
+        )
 
-        # Generate recommendations based on scores
-        recommendations = []
-        if result["overall_risk_score"] > 0.7:
-            recommendations.append("Consider reviewing high-risk changes carefully")
-        if result["complexity_score"] > 0.8:
-            recommendations.append("Refactor complex code to improve maintainability")
-        if result["test_coverage"] < 0.6:
-            recommendations.append("Increase test coverage")
-        if result["issues_found"] > 10:
-            recommendations.append("Address critical issues before proceeding")
+        result["issue_density"] = (
+            result["issues_found"] / result["files_analyzed"]
+            if result["files_analyzed"] > 0
+            else 0.0
+        )
 
-        result["recommendations"] = recommendations or ["No specific recommendations"]
+        # Add severity breakdown
+        result["severity_breakdown"] = {
+            "critical": Faker.random_int(0, result["issues_found"] // 4),
+            "high": Faker.random_int(0, result["issues_found"] // 3),
+            "medium": Faker.random_int(0, result["issues_found"] // 2),
+            "low": Faker.random_int(0, result["issues_found"]),
+        }
 
-        # Generate detailed breakdown
-        result["details"] = {
-            "performance": {
-                "analysis_duration_ms": result["duration_ms"],
-                "memory_used_mb": Faker.random_int(10, 500),
-                "cpu_usage_percent": Faker.random_int(5, 95),
-            },
-            "file_breakdown": {
-                "python_files": Faker.random_int(0, result["files_analyzed"]),
-                "test_files": Faker.random_int(0, result["files_analyzed"] // 2),
-                "config_files": Faker.random_int(0, 5),
-                "documentation_files": Faker.random_int(0, 10),
-            },
-            "quality_gates": {
-                "risk_threshold_passed": result["overall_risk_score"] < 0.8,
-                "complexity_threshold_passed": result["complexity_score"] < 0.7,
-                "coverage_threshold_passed": result["test_coverage"] > 0.7,
-            },
+        # Add file type breakdown
+        result["file_type_breakdown"] = {
+            "source": Faker.random_int(0, result["files_analyzed"]),
+            "test": Faker.random_int(0, result["files_analyzed"] // 3),
+            "documentation": Faker.random_int(0, result["files_analyzed"] // 4),
+            "configuration": Faker.random_int(0, result["files_analyzed"] // 5),
+        }
+
+        # Add analysis metadata
+        result["analysis_metadata"] = {
+            "tool_version": f"{Faker.random_int(1, 5)}.{Faker.random_int(0, 9)}.{Faker.random_int(0, 9)}",
+            "analysis_type": Faker.random_element(["static", "dynamic", "hybrid"]),
+            "scan_depth": Faker.random_element(["shallow", "standard", "deep"]),
+            "parallel_processing": Faker.random_element([True, False]),
         }
 
         return result
 
-    # Trait methods for different analysis scenarios
+    # Trait methods for different analysis outcomes
     @classmethod
     def trait_successful_analysis(cls) -> dict[str, Any]:
         """Trait for successful analysis."""
         return {
             "status": "success",
             "errors_count": 0,
-            "warnings_count": Faker.random_int(0, 3),
-            "overall_risk_score": Faker.pyfloat(0.0, 0.6),
-            "test_coverage": Faker.pyfloat(0.7, 1.0),
-            "duration_ms": Faker.random_int(100, 5000),
+            "warnings_count": Faker.random_int(0, 5),
+            "overall_risk_score": Faker.pyfloat(0.0, 0.4),
         }
 
     @classmethod
@@ -151,10 +138,9 @@ class AnalysisResultFactory(BaseFactory, SequenceMixin):
         """Trait for analysis with warnings."""
         return {
             "status": "warning",
+            "warnings_count": Faker.random_int(5, 15),
             "errors_count": 0,
-            "warnings_count": Faker.random_int(3, 15),
-            "overall_risk_score": Faker.pyfloat(0.6, 0.8),
-            "issues_found": Faker.random_int(5, 20),
+            "overall_risk_score": Faker.pyfloat(0.3, 0.6),
         }
 
     @classmethod
@@ -162,26 +148,31 @@ class AnalysisResultFactory(BaseFactory, SequenceMixin):
         """Trait for failed analysis."""
         return {
             "status": "error",
-            "errors_count": Faker.random_int(1, 5),
+            "errors_count": Faker.random_int(5, 20),
             "warnings_count": Faker.random_int(0, 10),
-            "files_analyzed": Faker.random_int(0, 20),
-            "duration_ms": Faker.random_int(100, 2000),
+            "overall_risk_score": Faker.pyfloat(0.7, 1.0),
         }
 
     @classmethod
     def trait_performance_analysis(cls) -> dict[str, Any]:
         """Trait for performance-focused analysis."""
         return {
-            "duration_ms": Faker.random_int(100, 1000),
-            "files_analyzed": Faker.random_int(50, 200),
+            "analysis_metadata": {
+                "analysis_type": "dynamic",
+                "scan_depth": "deep",
+            },
+            "duration_ms": Faker.random_int(5000, 30000),
         }
 
     @classmethod
     def trait_security_analysis(cls) -> dict[str, Any]:
         """Trait for security-focused analysis."""
         return {
-            "overall_risk_score": Faker.pyfloat(0.3, 0.9),
-            "issues_found": Faker.random_int(2, 15),
+            "analysis_metadata": {
+                "analysis_type": "static",
+                "scan_depth": "deep",
+            },
+            "issues_found": Faker.random_int(10, 50),
         }
 
 
@@ -421,7 +412,7 @@ class PerformanceMetricsFactory(BaseFactory):
 
 # Convenience functions for creating analysis-related collections
 def create_analysis_results(
-    count: int = 1, status: str = None, **kwargs
+    count: int = 1, status: Optional[str] = None, **kwargs
 ) -> list[dict[str, Any]]:
     """Create multiple analysis results."""
     results = []

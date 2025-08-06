@@ -10,7 +10,9 @@ import uuid
 from contextlib import suppress
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional, TypeVar
+
+T = TypeVar("T")
 
 
 class Faker:
@@ -251,7 +253,7 @@ class BaseFactory:
     _model = dict
 
     @classmethod
-    def create(cls, **kwargs) -> Any:
+    def create(cls, **kwargs: Any) -> Any:
         """
         Create an instance with optional overrides.
 
@@ -274,12 +276,12 @@ class BaseFactory:
             return cls._model(**defaults)
 
     @classmethod
-    def build(cls, **kwargs) -> Any:
+    def build(cls, **kwargs: Any) -> Any:
         """Alias for create method for factory_boy compatibility."""
         return cls.create(**kwargs)
 
     @classmethod
-    def create_batch(cls, size: int, **kwargs) -> list[Any]:
+    def create_batch(cls, size: int, **kwargs: Any) -> list[Any]:
         """Create multiple instances."""
         return [cls.create(**kwargs) for _ in range(size)]
 
@@ -317,8 +319,16 @@ class TraitMixin:
     Traits allow for easy creation of variations of the same factory.
     """
 
+    # Type hints for mypy - these should be overridden by concrete classes
+    _model: type[Any] = dict
+
     @classmethod
-    def with_traits(cls, *trait_names, **kwargs):
+    def _get_defaults(cls) -> dict[str, Any]:
+        """Extract default values from class attributes. Must be implemented by concrete classes."""
+        return {}
+
+    @classmethod
+    def with_traits(cls, *trait_names: str, **kwargs: Any) -> Any:
         """Create an instance with specified traits applied."""
         # Get base defaults
         defaults = cls._get_defaults()
@@ -347,7 +357,7 @@ class SequenceMixin:
     Sequences provide unique values across multiple instances.
     """
 
-    _sequences = {}
+    _sequences: dict[str, int] = {}
 
     @classmethod
     def sequence(cls, name: str, template: str = "{n}") -> str:
@@ -359,7 +369,7 @@ class SequenceMixin:
         return template.format(n=cls._sequences[name])
 
     @classmethod
-    def reset_sequences(cls):
+    def reset_sequences(cls) -> None:
         """Reset all sequences to 0."""
         cls._sequences.clear()
 
@@ -372,7 +382,7 @@ def create_realistic_timestamp(days_ago: int = 0, hours_ago: int = 0) -> datetim
     return base + offset
 
 
-def generate_commit_message(commit_type: str = None) -> str:
+def generate_commit_message(commit_type: Optional[str] = None) -> str:
     """Generate a realistic commit message."""
     if commit_type is None:
         commit_type = random.choice(
