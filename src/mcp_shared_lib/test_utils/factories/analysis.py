@@ -265,11 +265,13 @@ class RiskAssessmentFactory(BaseFactory):
             ),
             "user_facing_changes": assessment["overall_score"] > 0.5,
             "backward_compatibility": assessment["overall_score"] < 0.7,
-            "rollback_difficulty": "easy"
-            if assessment["overall_score"] < 0.4
-            else "medium"
-            if assessment["overall_score"] < 0.8
-            else "hard",
+            "rollback_difficulty": (
+                "easy"
+                if assessment["overall_score"] < 0.4
+                else "medium"
+                if assessment["overall_score"] < 0.8
+                else "hard"
+            ),
         }
 
         return assessment

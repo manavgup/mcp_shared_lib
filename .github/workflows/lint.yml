@@ -12,8 +12,6 @@
 name: Lint & Static Analysis
 
 on:
-  push:
-    branches: ["master", "main"]
   pull_request:
     branches: ["master", "main"]
 

@@ -237,7 +237,7 @@ def create_pr_recommendation_set(
 
 
 def create_recommendation_summary(
-    recommendations: list[dict[str, Any]]
+    recommendations: list[dict[str, Any]],
 ) -> dict[str, Any]:
     """Create a summary of PR recommendations."""
     if not recommendations:
@@ -265,12 +265,12 @@ def create_recommendation_summary(
         "total_lines_changed": total_lines,
         "type_distribution": type_counts,
         "priority_distribution": priority_counts,
-        "average_files_per_pr": total_files / len(recommendations)
-        if recommendations
-        else 0,
-        "average_lines_per_pr": total_lines / len(recommendations)
-        if recommendations
-        else 0,
+        "average_files_per_pr": (
+            total_files / len(recommendations) if recommendations else 0
+        ),
+        "average_lines_per_pr": (
+            total_lines / len(recommendations) if recommendations else 0
+        ),
         "complexity_score": _calculate_complexity_score(recommendations),
     }
 
