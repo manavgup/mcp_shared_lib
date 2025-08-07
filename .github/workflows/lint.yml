@@ -54,7 +54,7 @@ jobs:
               ruff check src/ tests/
 
           - id: black
-            setup: pip install black
+            setup: pip install black==23.12.1
             cmd: |
               black --check --diff src/ tests/
 
