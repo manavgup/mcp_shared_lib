@@ -1,5 +1,4 @@
-"""
-Base factory classes and utilities for the MCP test ecosystem.
+"""Base factory classes and utilities for the MCP test ecosystem.
 
 This module provides the foundation for all other factories, including
 a simple Faker implementation and base factory class.
@@ -16,8 +15,7 @@ T = TypeVar("T")
 
 
 class Faker:
-    """
-    Simple faker implementation for generating realistic test data.
+    """Simple faker implementation for generating realistic test data.
 
     This provides basic data generation without external dependencies.
     Can be easily extended or replaced with factory_boy's Faker if needed.
@@ -242,8 +240,7 @@ class Faker:
 
 
 class BaseFactory:
-    """
-    Base factory class providing common functionality for all factories.
+    """Base factory class providing common functionality for all factories.
 
     This class provides the foundation for creating test objects with
     realistic defaults and easy customization.
@@ -254,8 +251,7 @@ class BaseFactory:
 
     @classmethod
     def create(cls, **kwargs: Any) -> Any:
-        """
-        Create an instance with optional overrides.
+        """Create an instance with optional overrides.
 
         Args:
             **kwargs: Override any default attributes
@@ -313,8 +309,7 @@ class BaseFactory:
 
 
 class TraitMixin:
-    """
-    Mixin for adding trait support to factories.
+    """Mixin for adding trait support to factories.
 
     Traits allow for easy creation of variations of the same factory.
     """
@@ -351,8 +346,7 @@ class TraitMixin:
 
 
 class SequenceMixin:
-    """
-    Mixin for adding sequence support to factories.
+    """Mixin for adding sequence support to factories.
 
     Sequences provide unique values across multiple instances.
     """

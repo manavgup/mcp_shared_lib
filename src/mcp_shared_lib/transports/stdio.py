@@ -3,6 +3,8 @@
 import sys
 from typing import Any
 
+from fastmcp import FastMCP
+
 from .base import BaseTransport
 from .config import TransportConfig
 
@@ -25,7 +27,15 @@ class StdioTransport(BaseTransport):
         # Stdio doesn't have specific config in the current structure
         self._stdio_config = None
 
-    def run(self, server):
+    def run(self, server: FastMCP) -> None:
+        """Run the stdio transport server.
+
+        Args:
+            server (FastMCP): The FastMCP server instance to run.
+
+        This method starts the MCP server using stdio as the transport mechanism.
+        It sets the running state and logs the start and any errors encountered.
+        """
         try:
             self.server = server
             self._is_running = True
@@ -38,13 +48,24 @@ class StdioTransport(BaseTransport):
             self._is_running = False
 
     def stop(self) -> None:
+        """Stop the stdio transport.
+
+        This is a no-operation method since stdio transport does not require explicit stopping.
+        Logs the stop action for informational purposes.
+        """
         self.logger.info("Stopping stdio transport (noop)")
         pass
 
     def is_running(self) -> bool:
+        """Check if the stdio transport is currently running.
+
+        Returns:
+            bool: True if running, False otherwise.
+        """
         return getattr(self, "_is_running", False)
 
     def get_connection_info(self) -> dict[str, Any]:
+        """Get connection information for the stdio transport."""
         return {"transport": "stdio"}
 
     def get_health_status(self) -> dict[str, Any]:

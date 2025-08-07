@@ -236,7 +236,7 @@ The transport system is fully integrated with FastMCP and supports all FastMCP f
    ```bash
    # Check what's using the port
    lsof -i :9040
-   
+
    # Use a different port
    export MCP_HTTP_PORT=9041
    ```

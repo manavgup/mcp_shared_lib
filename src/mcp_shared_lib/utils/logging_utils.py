@@ -31,7 +31,7 @@ class LoggingService:
     def __init__(self) -> None:
         """Initialize logging service."""
         self._level = LogLevel.INFO
-        self._subscribers: list[asyncio.Queue] = []
+        self._subscribers: list[asyncio.Queue[dict[str, Any]]] = []
         self._loggers: dict[str, logging.Logger] = {}
 
     async def initialize(self, level: LogLevel) -> None:
@@ -134,7 +134,7 @@ class LoggingService:
         Yields:
             Log message events
         """
-        queue: asyncio.Queue = asyncio.Queue()
+        queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
         self._subscribers.append(queue)
         try:
             while True:
@@ -183,5 +183,5 @@ def get_logger(name: str) -> logging.Logger:
 
 
 async def setup_logging(level: LogLevel) -> None:
-    """Setup logging service."""
+    """Set up the logging service with the specified level."""
     await logging_service.initialize(level)

@@ -1,5 +1,4 @@
-"""
-Analysis-related test data factories.
+"""Analysis-related test data factories.
 
 This module provides factories for creating realistic analysis results,
 risk assessments, quality metrics, and performance data.
@@ -371,7 +370,7 @@ class PerformanceMetricsFactory(BaseFactory):
 
     @staticmethod
     def execution_time_ms() -> int:
-        """Execution time in milliseconds."""
+        """Generate a random execution time in milliseconds."""
         return Faker.random_int(10, 5000)
 
     @staticmethod
@@ -440,7 +439,6 @@ def create_comprehensive_analysis_report(
     include_security: bool = True,
 ) -> dict[str, Any]:
     """Create a comprehensive analysis report."""
-
     # Main analysis result
     analysis = AnalysisResultFactory.with_traits(
         "successful_analysis", files_analyzed=files_analyzed

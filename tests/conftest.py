@@ -1,5 +1,4 @@
-"""
-Shared test fixtures and utilities for the MCP ecosystem.
+"""Shared test fixtures and utilities for the MCP ecosystem.
 
 This module provides common fixtures and utilities that can be used across
 all MCP projects (shared_lib, local_repo_analyzer, pr_recommender).
@@ -12,7 +11,7 @@ import tempfile
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Optional, Union
 from unittest.mock import Mock
 
 import pytest
@@ -23,9 +22,6 @@ try:
     HAS_GIT = True
 except ImportError:
     HAS_GIT = False
-
-# Configuration for pytest plugins
-pytest_plugins = []
 
 
 @pytest.fixture(scope="session")
@@ -341,16 +337,18 @@ def mock_fastmcp_server():
 
 @pytest.fixture
 def create_test_files():
-    """Factory fixture for creating test files in a directory."""
+    """Create a factory fixture for creating test files in a directory."""
 
-    def _create_files(base_dir: Path, file_structure: dict[str, Union[str, dict]]):
-        """
-        Create files and directories based on a nested dictionary structure.
+    def _create_files(
+        base_dir: Path, file_structure: dict[str, Union[str, bytes, dict]]
+    ):
+        """Create files and directories based on a nested dictionary structure.
 
         Args:
             base_dir: Base directory to create files in
             file_structure: Dict where keys are file/dir names and values are:
                 - str: file content
+                - bytes: binary file content
                 - dict: subdirectory structure
         """
         for name, content in file_structure.items():
@@ -533,7 +531,7 @@ if HAS_GIT:
 else:
 
     @pytest.fixture
-    def temp_git_repo(temp_dir):
+    def temp_git_repo(temp_dir, environment_variables):
         """Fallback fixture when git is not available."""
         pytest.skip("Git not available for testing")
 
@@ -544,21 +542,23 @@ else:
 
 
 # Utility functions for tests
-def assert_file_exists(file_path: Path, message: str = None):
+def assert_file_exists(file_path: Path, message: Optional[str] = None):
     """Assert that a file exists with optional custom message."""
     if message is None:
         message = f"Expected file {file_path} to exist"
     assert file_path.exists() and file_path.is_file(), message
 
 
-def assert_dir_exists(dir_path: Path, message: str = None):
+def assert_dir_exists(dir_path: Path, message: Optional[str] = None):
     """Assert that a directory exists with optional custom message."""
     if message is None:
         message = f"Expected directory {dir_path} to exist"
     assert dir_path.exists() and dir_path.is_dir(), message
 
 
-def assert_file_content_contains(file_path: Path, content: str, message: str = None):
+def assert_file_content_contains(
+    file_path: Path, content: str, message: Optional[str] = None
+):
     """Assert that a file contains specific content."""
     if message is None:
         message = f"Expected file {file_path} to contain '{content}'"
@@ -568,7 +568,7 @@ def assert_file_content_contains(file_path: Path, content: str, message: str = N
 
 
 def create_mock_tool_result(
-    status: str = "success", data: Any = None, error: str = None
+    status: str = "success", data: Any = None, error: Optional[str] = None
 ):
     """Create a standardized mock tool result."""
     result = {"status": status}
@@ -592,7 +592,7 @@ def file_assertions():
 
 @pytest.fixture
 def mock_tool_result():
-    """Factory for creating mock tool results."""
+    """Create a factory for creating mock tool results."""
     return create_mock_tool_result
 
 

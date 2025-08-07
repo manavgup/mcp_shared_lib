@@ -12,6 +12,7 @@ class SSETransport(HttpBasedTransport):
     """Server-Sent Events transport for MCP servers - FIXED implementation."""
 
     def __init__(self, config: TransportConfig, server_name: str = "MCP Server"):
+        """Initialize SSE transport with configuration."""
         super().__init__(config, server_name)
         self._is_running = False
 
@@ -122,8 +123,8 @@ class SSETransport(HttpBasedTransport):
         else:
             health_path = "/healthz"  # SSE transport traditionally uses /healthz
 
-        @server.custom_route(health_path, methods=["GET"])
-        async def health_check(_request: Request):
+        @server.custom_route(health_path, methods=["GET"])  # type: ignore
+        async def health_check(_request: Request) -> JSONResponse:
             """Health check endpoint for SSE transport."""
             try:
                 status = self.get_health_status()

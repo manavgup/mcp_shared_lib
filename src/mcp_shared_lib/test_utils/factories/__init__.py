@@ -1,5 +1,4 @@
-"""
-Test data factories for the MCP ecosystem (moved to test_utils).
+"""Test data factories for the MCP ecosystem (moved to test_utils).
 
 This package provides modular, atomic factories for creating realistic test data.
 Each factory module focuses on a specific domain (git, analysis, recommendations, etc.)

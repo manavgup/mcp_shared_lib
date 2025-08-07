@@ -1,5 +1,4 @@
-"""
-Factory classes for creating MCP tool-related test data.
+"""Factory classes for creating MCP tool-related test data.
 
 This module provides factories for creating realistic tool execution results,
 server configurations, client sessions, and transaction data.

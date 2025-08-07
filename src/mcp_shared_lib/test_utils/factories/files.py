@@ -1,5 +1,4 @@
-"""
-File-related test data factories.
+"""File-related test data factories.
 
 This module provides factories for creating realistic file changes,
 file metadata, and file-related objects.
@@ -251,7 +250,7 @@ class FileMetadataFactory(BaseFactory):
 
     @staticmethod
     def line_count() -> int:
-        """Number of lines in file."""
+        """Generate a random number of lines in a file."""
         return Faker.random_int(10, 1000)
 
     @staticmethod
@@ -266,7 +265,7 @@ class FileMetadataFactory(BaseFactory):
 
     @staticmethod
     def permissions() -> str:
-        """File permissions (Unix-style)."""
+        """Generate Unix-style file permissions string."""
         return random.choice(["644", "755", "600", "664"])
 
     @staticmethod
@@ -308,8 +307,7 @@ def create_file_changes(
     change_types: Optional[list[str]] = None,
     **kwargs,
 ) -> list[dict[str, Any]]:
-    """
-    Create a list of realistic file changes.
+    """Create a list of realistic file changes.
 
     Args:
         count: Number of file changes to create

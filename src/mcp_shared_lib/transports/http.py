@@ -93,13 +93,22 @@ class HttpTransport(HttpBasedTransport):
         status = super().get_health_status()
 
         # Add HTTP-specific health information
-        status.update(
-            {
-                "http_healthy": self._is_running,
-                "endpoint": f"http://{self._http_config.host}:{self._http_config.port}",
-                "health_check_enabled": self._http_config.enable_health_check,
-            }
-        )
+        if self._http_config:
+            status.update(
+                {
+                    "http_healthy": self._is_running,
+                    "endpoint": f"http://{self._http_config.host}:{self._http_config.port}",
+                    "health_check_enabled": self._http_config.enable_health_check,
+                }
+            )
+        else:
+            status.update(
+                {
+                    "http_healthy": False,
+                    "endpoint": "No HTTP config",
+                    "health_check_enabled": False,
+                }
+            )
 
         return status
 
@@ -112,10 +121,13 @@ class HttpTransport(HttpBasedTransport):
         from starlette.requests import Request
         from starlette.responses import JSONResponse
 
+        if not self._http_config:
+            return
+
         health_path = self._http_config.health_check_path
 
-        @server.custom_route(health_path, methods=["GET"])
-        async def health_check(_request: Request):
+        @server.custom_route(health_path, methods=["GET"])  # type: ignore
+        async def health_check(_request: Request) -> JSONResponse:
             """Health check endpoint for HTTP transport."""
             try:
                 status = self.get_health_status()

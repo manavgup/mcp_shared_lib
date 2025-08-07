@@ -8,7 +8,7 @@ from fastmcp import FastMCP
 
 from mcp_shared_lib.utils import logging_service
 
-from .config import TransportConfig
+from .config import HTTPConfig, SSEConfig, TransportConfig
 
 
 class TransportError(Exception):
@@ -137,7 +137,7 @@ class HttpBasedTransport(BaseTransport):
     def __init__(self, config: TransportConfig, server_name: str = "MCP Server"):
         """Initialize HTTP-based transport."""
         super().__init__(config, server_name)
-        self._server_process = None
+        self._server_process: Optional[Any] = None
 
     def get_connection_info(self) -> dict[str, Any]:
         """Get HTTP connection information."""
@@ -154,10 +154,10 @@ class HttpBasedTransport(BaseTransport):
         transport_config = self.config.get_transport_config()
 
         # Only add health check if enabled and transport supports it
-        if getattr(transport_config, "enable_health_check", False):
+        if transport_config and getattr(transport_config, "enable_health_check", False):
             health_path = getattr(transport_config, "health_check_path", "/health")
 
-            @_server.resource(f"health://{health_path}")
+            @_server.resource(f"health://{health_path}")  # type: ignore[misc]
             async def health_check() -> str:
                 """Health check endpoint."""
                 status = self.get_health_status()
@@ -176,24 +176,31 @@ class HttpBasedTransport(BaseTransport):
         transport_config = self.config.get_transport_config()
 
         # CORS configuration (if supported by transport)
-        if hasattr(transport_config, "cors_origins"):
+        if (
+            transport_config
+            and hasattr(transport_config, "cors_origins")
+            and isinstance(transport_config, (HTTPConfig, SSEConfig))
+        ):
             self.logger.debug(f"CORS origins: {transport_config.cors_origins}")
             # Note: Actual CORS implementation would depend on FastMCP's capabilities
             # This is a placeholder for future CORS implementation
 
     def stop(self) -> None:
         """Stop HTTP-based transport."""
-        if self._server_process:
+        if self._server_process is not None:
             try:
                 self._server_process.terminate()
-                self._server_process = None
-                self._is_running = False
-                self.logger.info(f"{self.server_name} stopped")
             except Exception as e:
                 self._log_error(e, "stopping server")
 
+        self._server_process = None
+        self._is_running = False
+        self.logger.info(f"{self.server_name} stopped")
+
     def is_running(self) -> bool:
         """Check if HTTP-based transport is running."""
-        return self._is_running and (
-            self._server_process is None or self._server_process.poll() is None
-        )
+        if not self._is_running:
+            return False
+        if self._server_process is None:
+            return False
+        return self._server_process.poll() is None

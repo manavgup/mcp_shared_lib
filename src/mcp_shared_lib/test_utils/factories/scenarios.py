@@ -1,5 +1,4 @@
-"""
-Scenario-related test data factories.
+"""Scenario-related test data factories.
 
 This module provides factories for creating realistic test scenarios,
 workflow states, and integration test data.

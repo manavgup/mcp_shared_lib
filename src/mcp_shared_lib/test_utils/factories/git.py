@@ -1,5 +1,4 @@
-"""
-Git-related test data factories.
+"""Git-related test data factories.
 
 This module provides factories for creating realistic git objects
 including commits, branches, repository states, and diffs.

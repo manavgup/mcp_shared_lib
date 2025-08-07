@@ -4,7 +4,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class BaseMCPSettings(BaseSettings):
+class BaseMCPSettings(BaseSettings):  # type: ignore[misc]
     """Base settings for all MCP components."""
 
     model_config = SettingsConfigDict(

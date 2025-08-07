@@ -1,5 +1,4 @@
-"""
-Recommendation-related test data factories.
+"""Recommendation-related test data factories.
 
 This module provides factories for creating realistic PR recommendations
 and recommendation-related objects.

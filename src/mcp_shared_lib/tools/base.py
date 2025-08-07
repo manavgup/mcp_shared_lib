@@ -10,6 +10,7 @@ class BaseMCPTool(ABC):
     """Base class for MCP tools with common functionality."""
 
     def __init__(self) -> None:
+        """Initialize the base tool with logging."""
         self.logger = logging_service.get_logger(self.__class__.__name__)
 
     @abstractmethod
