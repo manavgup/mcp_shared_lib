@@ -1,15 +1,16 @@
-"""
-MCP tools and server-related test data factories.
+"""Factory classes for creating MCP tool-related test data.
 
-This module provides factories for creating realistic MCP tool results,
-server configurations, and client-server interaction scenarios.
+This module provides factories for creating realistic tool execution results,
+server configurations, client sessions, and transaction data.
 """
 
 import random
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Optional, TypeVar
 
 from .base import BaseFactory, Faker, SequenceMixin
+
+T = TypeVar("T")
 
 
 class MCPToolResultFactory(BaseFactory, SequenceMixin):
@@ -56,7 +57,7 @@ class MCPToolResultFactory(BaseFactory, SequenceMixin):
         return Faker.date_time()
 
     @classmethod
-    def create(cls, **kwargs) -> dict[str, Any]:
+    def create(cls, **kwargs: Any) -> dict[str, Any]:
         """Create tool result with status-specific data."""
         result = super().create(**kwargs)
 
@@ -241,52 +242,30 @@ class MCPServerFactory(BaseFactory):
         return Faker.random_int(30, 300)
 
     @classmethod
-    def create(cls, **kwargs) -> dict[str, Any]:
-        """Create server configuration with tools and capabilities."""
+    def create(cls, **kwargs: Any) -> dict[str, Any]:
+        """Create server configuration with computed properties."""
         server = super().create(**kwargs)
 
-        # Add server capabilities
-        server["capabilities"] = {
-            "supports_streaming": Faker.random_element([True, False]),
-            "supports_cancellation": True,
-            "supports_progress_updates": Faker.random_element([True, False]),
-            "max_request_size_mb": Faker.random_int(1, 100),
-            "supported_formats": ["json", "yaml"],
-        }
+        # Add computed properties
+        server["health_status"] = Faker.random_element(
+            ["healthy", "degraded", "unhealthy"]
+        )
+        server["uptime_percent"] = Faker.pyfloat(95.0, 99.9)
+        server["last_restart"] = Faker.date_time()
 
-        # Add available tools
-        all_tools = [
-            "analyze_repository",
-            "get_changes",
-            "assess_risk",
-            "check_push_readiness",
-            "get_commit_history",
-            "analyze_diff",
-            "recommend_prs",
-            "validate_changes",
-            "get_file_metadata",
-            "calculate_metrics",
-            "generate_report",
-            "export_results",
+        # Generate available tools
+        tool_count = Faker.random_int(5, 20)
+        server["available_tools"] = [
+            MCPToolResultFactory.tool_name() for _ in range(tool_count)
         ]
 
-        tool_count = Faker.random_int(4, len(all_tools))
-        server["available_tools"] = random.sample(all_tools, tool_count)
-
-        # Add resource limits
-        server["resource_limits"] = {
-            "max_memory_mb": Faker.random_int(512, 4096),
-            "max_cpu_percent": Faker.random_int(50, 100),
-            "max_disk_usage_mb": Faker.random_int(1024, 10240),
-            "max_analysis_files": Faker.random_int(100, 10000),
-        }
-
-        # Add monitoring configuration
-        server["monitoring"] = {
-            "health_check_interval_seconds": Faker.random_int(30, 300),
-            "metrics_collection_enabled": True,
-            "log_level": Faker.random_element(["DEBUG", "INFO", "WARNING", "ERROR"]),
-            "performance_tracking": Faker.random_element([True, False]),
+        # Add performance metrics
+        server["performance_metrics"] = {
+            "avg_response_time_ms": Faker.random_int(50, 500),
+            "requests_per_second": Faker.random_int(10, 100),
+            "error_rate_percent": Faker.pyfloat(0.0, 2.0),
+            "memory_usage_mb": Faker.random_int(100, 2048),
+            "cpu_usage_percent": Faker.random_int(10, 80),
         }
 
         return server
@@ -334,41 +313,37 @@ class MCPClientFactory(BaseFactory):
         return Faker.random_int(1, 5)
 
     @classmethod
-    def create(cls, **kwargs) -> dict[str, Any]:
-        """Create client configuration."""
+    def create(cls, **kwargs: Any) -> dict[str, Any]:
+        """Create client configuration with computed properties."""
         client = super().create(**kwargs)
 
-        # Add client preferences
-        client["preferences"] = {
-            "response_format": Faker.random_element(["json", "yaml"]),
-            "compression_enabled": Faker.random_element([True, False]),
-            "streaming_preferred": Faker.random_element([True, False]),
-            "cache_responses": Faker.random_element([True, False]),
-            "verbose_errors": Faker.random_element([True, False]),
+        # Add computed properties
+        client["connection_status"] = Faker.random_element(
+            ["connected", "disconnected", "reconnecting"]
+        )
+        client["last_activity"] = Faker.date_time()
+        client["session_duration_minutes"] = Faker.random_int(1, 480)
+
+        # Add client capabilities
+        client["capabilities"] = {
+            "supports_streaming": Faker.random_element([True, False]),
+            "supports_batch_operations": Faker.random_element([True, False]),
+            "max_concurrent_requests": Faker.random_int(1, 10),
+            "preferred_transport": Faker.random_element(["http", "websocket", "stdio"]),
         }
 
-        # Add authentication info
-        client["authentication"] = {
-            "method": Faker.random_element(["api_key", "oauth", "token", "none"]),
-            "token_expires_at": datetime.now()
-            + timedelta(days=Faker.random_int(1, 365)),
-            "refresh_token_available": Faker.random_element([True, False]),
-        }
-
-        # Add session info
-        client["session"] = {
-            "session_id": Faker.uuid4(),
-            "created_at": datetime.now() - timedelta(minutes=Faker.random_int(1, 1440)),
-            "last_activity": datetime.now()
-            - timedelta(minutes=Faker.random_int(0, 60)),
-            "requests_made": Faker.random_int(0, 1000),
-            "bytes_transferred": Faker.random_int(1024, 10485760),  # 1KB to 10MB
+        # Add usage statistics
+        client["usage_stats"] = {
+            "total_requests": Faker.random_int(10, 10000),
+            "successful_requests": Faker.random_int(8, 9500),
+            "failed_requests": Faker.random_int(0, 500),
+            "average_response_time_ms": Faker.random_int(100, 2000),
         }
 
         return client
 
 
-class MCPTransactionFactory(BaseFactory):
+class MCPTransactionFactory(BaseFactory, SequenceMixin):
     """Factory for creating MCP client-server transaction records."""
 
     @classmethod
@@ -404,7 +379,7 @@ class MCPTransactionFactory(BaseFactory):
         return Faker.random_int(500, 51200)  # 500B to 50KB
 
     @classmethod
-    def create(cls, **kwargs) -> dict[str, Any]:
+    def create(cls, **kwargs: Any) -> dict[str, Any]:
         """Create transaction record with computed metrics."""
         transaction = super().create(**kwargs)
 
@@ -453,7 +428,7 @@ class MCPTransactionFactory(BaseFactory):
 
 # Convenience functions for creating tool-related collections
 def create_tool_execution_batch(
-    tool_names: list[str] = None, count: int = 5, success_rate: float = 0.9
+    tool_names: Optional[list[str]] = None, count: int = 5, success_rate: float = 0.9
 ) -> list[dict[str, Any]]:
     """Create a batch of tool execution results."""
     if tool_names is None:

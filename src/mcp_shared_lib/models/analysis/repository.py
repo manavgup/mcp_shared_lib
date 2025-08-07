@@ -53,8 +53,8 @@ class RepositoryStatus(BaseModel):
     def has_outstanding_work(self) -> bool:
         """Check if there's any outstanding work in the repository."""
         return (
-            self.working_directory.has_changes
-            or self.staged_changes.ready_to_commit
+            bool(self.working_directory.has_changes)
+            or bool(self.staged_changes.ready_to_commit)
             or len(self.unpushed_commits) > 0
             or len(self.stashed_changes) > 0
         )
@@ -62,9 +62,9 @@ class RepositoryStatus(BaseModel):
     @property
     def total_outstanding_changes(self) -> int:
         """Total number of outstanding changes across all categories."""
-        return (
-            self.working_directory.total_files
-            + self.staged_changes.total_staged
+        return (  # type: ignore[no-any-return]
+            int(self.working_directory.total_files)  # type: ignore
+            + int(self.staged_changes.total_staged)  # type: ignore
             + len(self.unpushed_commits)
             + len(self.stashed_changes)
         )

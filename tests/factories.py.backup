@@ -25,67 +25,67 @@ except ImportError:
         def __init__(self, **kwargs):
             for key, value in kwargs.items():
                 setattr(self, key, value)
-    
+
     class AnalysisResult(BaseModel):
         pass
-    
+
     class GitCommit(BaseModel):
         pass
-    
+
     class FileChange(BaseModel):
         pass
-    
+
     class RepositoryInfo(BaseModel):
         pass
 
 
 class Faker:
     """Simple faker implementation when factory_boy's Faker is not available."""
-    
+
     @staticmethod
     def sentence(nb_words=6):
         words = ['test', 'sample', 'example', 'data', 'factory', 'mock', 'dummy', 'placeholder']
         return ' '.join(random.choices(words, k=nb_words)).capitalize()
-    
+
     @staticmethod
     def name():
         first_names = ['John', 'Jane', 'Bob', 'Alice', 'Charlie', 'Diana', 'Eve', 'Frank']
         last_names = ['Doe', 'Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller']
         return f"{random.choice(first_names)} {random.choice(last_names)}"
-    
+
     @staticmethod
     def email():
         domains = ['example.com', 'test.org', 'sample.net', 'demo.io']
         names = ['user', 'test', 'demo', 'sample']
         return f"{random.choice(names)}{random.randint(1, 999)}@{random.choice(domains)}"
-    
+
     @staticmethod
     def file_path(depth=2, extension='py'):
         paths = ['src', 'tests', 'docs', 'config', 'utils', 'models', 'services', 'tools']
         files = ['main', 'utils', 'config', 'test_main', 'helpers', 'models', 'client']
-        
+
         parts = [random.choice(paths) for _ in range(depth)]
         filename = f"{random.choice(files)}.{extension}"
         return str(Path(*parts, filename))
-    
+
     @staticmethod
     def date_time():
         base = datetime.now()
         offset = timedelta(days=random.randint(-30, 0), hours=random.randint(-23, 0))
         return base + offset
-    
+
     @staticmethod
     def random_int(min=0, max=100):
         return random.randint(min, max)
-    
+
     @staticmethod
     def pyfloat(min_value=0.0, max_value=1.0):
         return random.uniform(min_value, max_value)
-    
+
     @staticmethod
     def text(max_nb_chars=200):
         return "Sample text content for testing purposes. " * (max_nb_chars // 50 + 1)
-    
+
     @staticmethod
     def url():
         domains = ['github.com', 'gitlab.com', 'bitbucket.org']
@@ -97,7 +97,7 @@ class Faker:
 # Base factory class
 class BaseFactory:
     """Base factory for creating test objects."""
-    
+
     @classmethod
     def create(cls, **kwargs):
         """Create an instance with optional overrides."""
@@ -110,17 +110,17 @@ class BaseFactory:
                     defaults[attr_name] = attr_value()
                 else:
                     defaults[attr_name] = attr_value
-        
+
         # Override with provided kwargs
         defaults.update(kwargs)
-        
+
         # Create the object
         if hasattr(cls, '_model'):
             return cls._model(**defaults)
         else:
             # Return a dict if no model class is specified
             return defaults
-    
+
     @classmethod
     def build(cls, **kwargs):
         """Alias for create method."""
@@ -130,35 +130,35 @@ class BaseFactory:
 class GitCommitFactory(BaseFactory):
     """Factory for creating GitCommit test data."""
     _model = GitCommit if HAS_MODELS else None
-    
+
     @staticmethod
     def hash():
         return f"{uuid.uuid4().hex[:8]}{uuid.uuid4().hex[:8]}"
-    
+
     @staticmethod
     def message():
         prefixes = ['feat:', 'fix:', 'docs:', 'style:', 'refactor:', 'test:', 'chore:']
         actions = ['add', 'update', 'remove', 'fix', 'improve', 'implement']
-        subjects = ['user authentication', 'data processing', 'error handling', 
+        subjects = ['user authentication', 'data processing', 'error handling',
                    'API endpoints', 'test coverage', 'documentation', 'configuration']
-        
+
         prefix = random.choice(prefixes)
         action = random.choice(actions)
         subject = random.choice(subjects)
         return f"{prefix} {action} {subject}"
-    
+
     @staticmethod
     def author():
         return Faker.name()
-    
+
     @staticmethod
     def email():
         return Faker.email()
-    
+
     @staticmethod
     def timestamp():
         return Faker.date_time()
-    
+
     @staticmethod
     def files_changed():
         files = [
@@ -172,35 +172,35 @@ class GitCommitFactory(BaseFactory):
 class FileChangeFactory(BaseFactory):
     """Factory for creating FileChange test data."""
     _model = FileChange if HAS_MODELS else None
-    
+
     @staticmethod
     def file_path():
         return Faker.file_path()
-    
+
     @staticmethod
     def change_type():
         return random.choice(['modified', 'added', 'deleted', 'renamed'])
-    
+
     @staticmethod
     def lines_added():
         return Faker.random_int(min=0, max=200)
-    
+
     @staticmethod
     def lines_removed():
         return Faker.random_int(min=0, max=100)
-    
+
     @staticmethod
     def risk_score():
         return Faker.pyfloat(min_value=0.0, max_value=1.0)
-    
+
     @staticmethod
     def complexity_change():
         return Faker.random_int(min=-5, max=15)
-    
+
     @staticmethod
     def size_bytes():
         return Faker.random_int(min=100, max=50000)
-    
+
     @staticmethod
     def test_coverage():
         return Faker.pyfloat(min_value=0.0, max_value=1.0)
@@ -209,39 +209,39 @@ class FileChangeFactory(BaseFactory):
 class RepositoryInfoFactory(BaseFactory):
     """Factory for creating RepositoryInfo test data."""
     _model = RepositoryInfo if HAS_MODELS else None
-    
+
     @staticmethod
     def path():
         return str(Path("/test/repos") / f"repo_{uuid.uuid4().hex[:8]}")
-    
+
     @staticmethod
     def name():
         prefixes = ['test', 'sample', 'demo', 'example']
         types = ['app', 'service', 'library', 'tool', 'api']
         return f"{random.choice(prefixes)}-{random.choice(types)}"
-    
+
     @staticmethod
     def remote_url():
         return Faker.url()
-    
+
     @staticmethod
     def current_branch():
         types = ['feature', 'bugfix', 'hotfix', 'release']
         names = ['auth', 'api', 'ui', 'database', 'performance', 'security']
         return f"{random.choice(types)}/{random.choice(names)}-{random.randint(1, 999)}"
-    
+
     @staticmethod
     def default_branch():
         return random.choice(['main', 'master', 'develop'])
-    
+
     @staticmethod
     def is_dirty():
         return random.choice([True, False])
-    
+
     @staticmethod
     def ahead_by():
         return Faker.random_int(min=0, max=10)
-    
+
     @staticmethod
     def behind_by():
         return Faker.random_int(min=0, max=5)
@@ -250,19 +250,19 @@ class RepositoryInfoFactory(BaseFactory):
 class AnalysisResultFactory(BaseFactory):
     """Factory for creating AnalysisResult test data."""
     _model = AnalysisResult if HAS_MODELS else None
-    
+
     @staticmethod
     def timestamp():
         return Faker.date_time()
-    
+
     @staticmethod
     def status():
         return random.choice(['success', 'warning', 'error', 'partial'])
-    
+
     @staticmethod
     def summary():
         return Faker.sentence(nb_words=8)
-    
+
     @staticmethod
     def details():
         return {
@@ -272,7 +272,7 @@ class AnalysisResultFactory(BaseFactory):
             "test_coverage_percentage": Faker.pyfloat(min_value=0.0, max_value=100.0),
             "execution_time_ms": Faker.random_int(min=100, max=5000)
         }
-    
+
     @staticmethod
     def risk_assessment():
         return {
@@ -291,45 +291,45 @@ class AnalysisResultFactory(BaseFactory):
 
 class PRRecommendationFactory(BaseFactory):
     """Factory for creating PR recommendation test data."""
-    
+
     @staticmethod
     def title():
         types = ['feat', 'fix', 'docs', 'refactor', 'test']
         actions = ['Add', 'Update', 'Remove', 'Fix', 'Improve', 'Implement']
         subjects = ['user authentication', 'API endpoints', 'data validation',
                    'error handling', 'test coverage', 'documentation']
-        
+
         return f"{random.choice(actions)} {random.choice(subjects)}"
-    
+
     @staticmethod
     def description():
         return Faker.text(max_nb_chars=300)
-    
+
     @staticmethod
     def files():
         file_count = random.randint(1, 8)
         return [Faker.file_path() for _ in range(file_count)]
-    
+
     @staticmethod
     def estimated_size():
         return random.choice(['small', 'medium', 'large'])
-    
+
     @staticmethod
     def priority():
         return random.choice(['low', 'medium', 'high', 'critical'])
-    
+
     @staticmethod
     def risk_level():
         return random.choice(['low', 'medium', 'high'])
-    
+
     @staticmethod
     def reviewers():
         reviewer_count = random.randint(1, 3)
         return [Faker.name() for _ in range(reviewer_count)]
-    
+
     @staticmethod
     def labels():
-        all_labels = ['feature', 'bugfix', 'enhancement', 'documentation', 
+        all_labels = ['feature', 'bugfix', 'enhancement', 'documentation',
                      'testing', 'refactoring', 'security', 'performance']
         label_count = random.randint(1, 4)
         return random.sample(all_labels, label_count)
@@ -337,15 +337,15 @@ class PRRecommendationFactory(BaseFactory):
 
 class MCPToolResultFactory(BaseFactory):
     """Factory for creating MCP tool execution results."""
-    
+
     @staticmethod
     def status():
         return random.choice(['success', 'error', 'timeout', 'partial'])
-    
+
     @staticmethod
     def execution_time_ms():
         return Faker.random_int(min=10, max=5000)
-    
+
     @staticmethod
     def data():
         return {
@@ -359,7 +359,7 @@ class MCPToolResultFactory(BaseFactory):
                 "memory_usage": Faker.random_int(min=1024, max=102400)
             }
         }
-    
+
     @staticmethod
     def error():
         error_types = ['ValidationError', 'NetworkError', 'TimeoutError', 'AuthenticationError']
@@ -372,32 +372,32 @@ class MCPToolResultFactory(BaseFactory):
 
 class GitRepositoryStateFactory(BaseFactory):
     """Factory for creating git repository state test data."""
-    
+
     @staticmethod
     def modified_files():
         count = random.randint(0, 10)
         return [Faker.file_path() for _ in range(count)]
-    
+
     @staticmethod
     def untracked_files():
         count = random.randint(0, 5)
         return [Faker.file_path() for _ in range(count)]
-    
+
     @staticmethod
     def staged_files():
         count = random.randint(0, 8)
         return [Faker.file_path() for _ in range(count)]
-    
+
     @staticmethod
     def deleted_files():
         count = random.randint(0, 3)
         return [Faker.file_path() for _ in range(count)]
-    
+
     @staticmethod
     def conflicts():
         count = random.randint(0, 2)
         return [Faker.file_path() for _ in range(count)]
-    
+
     @staticmethod
     def stashes():
         count = random.randint(0, 3)
@@ -409,7 +409,7 @@ class GitRepositoryStateFactory(BaseFactory):
             }
             for i in range(count)
         ]
-    
+
     @staticmethod
     def unpushed_commits():
         count = random.randint(0, 5)
@@ -450,7 +450,7 @@ def create_git_state(**kwargs) -> Dict:
 # Specialized factory functions for common test scenarios
 class TestScenarioFactory:
     """Factory for creating common test scenarios."""
-    
+
     @staticmethod
     def clean_repository():
         """Create a clean repository state."""
@@ -462,7 +462,7 @@ class TestScenarioFactory:
             conflicts=[],
             stashes=[]
         )
-    
+
     @staticmethod
     def dirty_repository():
         """Create a repository with many changes."""
@@ -480,7 +480,7 @@ class TestScenarioFactory:
                 }
             ]
         )
-    
+
     @staticmethod
     def high_risk_changes():
         """Create high-risk file changes."""
@@ -507,7 +507,7 @@ class TestScenarioFactory:
                 lines_removed=0
             )
         ]
-    
+
     @staticmethod
     def low_risk_changes():
         """Create low-risk file changes."""
@@ -534,7 +534,7 @@ class TestScenarioFactory:
                 lines_removed=3
             )
         ]
-    
+
     @staticmethod
     def feature_development_scenario():
         """Create a typical feature development scenario."""
@@ -584,7 +584,7 @@ class TestScenarioFactory:
                 )
             ]
         }
-    
+
     @staticmethod
     def bug_fix_scenario():
         """Create a typical bug fix scenario."""
@@ -621,7 +621,7 @@ class TestScenarioFactory:
                 )
             ]
         }
-    
+
     @staticmethod
     def refactoring_scenario():
         """Create a large refactoring scenario."""
@@ -669,51 +669,51 @@ class TestScenarioFactory:
 
 class MockDataBuilder:
     """Builder class for creating complex mock data structures."""
-    
+
     def __init__(self):
         self.data = {}
-    
+
     def with_repository(self, **kwargs):
         """Add repository information."""
         self.data['repository'] = RepositoryInfoFactory.create(**kwargs)
         return self
-    
+
     def with_git_state(self, **kwargs):
         """Add git state information."""
         self.data['git_state'] = GitRepositoryStateFactory.create(**kwargs)
         return self
-    
+
     def with_file_changes(self, count=3, **kwargs):
         """Add file changes."""
         self.data['file_changes'] = create_file_changes(count, **kwargs)
         return self
-    
+
     def with_commits(self, count=5, **kwargs):
         """Add commit history."""
         self.data['commits'] = create_commits(count, **kwargs)
         return self
-    
+
     def with_analysis_result(self, **kwargs):
         """Add analysis result."""
         self.data['analysis_result'] = AnalysisResultFactory.create(**kwargs)
         return self
-    
+
     def with_pr_recommendations(self, count=3, **kwargs):
         """Add PR recommendations."""
         self.data['pr_recommendations'] = create_pr_recommendations(count, **kwargs)
         return self
-    
+
     def with_tool_results(self, tools=None, **kwargs):
         """Add tool execution results."""
         if tools is None:
             tools = ['analyze_changes', 'check_push_readiness', 'recommend_prs']
-        
+
         self.data['tool_results'] = {
             tool: MCPToolResultFactory.create(**kwargs)
             for tool in tools
         }
         return self
-    
+
     def build(self):
         """Build and return the complete data structure."""
         return self.data.copy()
@@ -723,7 +723,7 @@ class MockDataBuilder:
 __all__ = [
     # Factory classes
     'GitCommitFactory',
-    'FileChangeFactory', 
+    'FileChangeFactory',
     'RepositoryInfoFactory',
     'AnalysisResultFactory',
     'PRRecommendationFactory',
@@ -731,7 +731,7 @@ __all__ = [
     'GitRepositoryStateFactory',
     'TestScenarioFactory',
     'MockDataBuilder',
-    
+
     # Convenience functions
     'create_file_changes',
     'create_commits',
@@ -739,7 +739,7 @@ __all__ = [
     'create_analysis_results',
     'create_repository_info',
     'create_git_state',
-    
+
     # Utility classes
     'BaseFactory',
     'Faker'
@@ -750,26 +750,26 @@ __all__ = [
 def example_usage():
     """
     Example usage of the test factories.
-    
+
     This function demonstrates how to use the various factories
     to create test data for different scenarios.
     """
-    
+
     # Create a single commit
     commit = GitCommitFactory.create()
-    
+
     # Create a commit with specific values
     custom_commit = GitCommitFactory.create(
         message="feat: add user authentication",
         author="John Doe"
     )
-    
+
     # Create multiple file changes
     changes = create_file_changes(count=5)
-    
+
     # Create a complete test scenario
     scenario = TestScenarioFactory.feature_development_scenario()
-    
+
     # Use the builder pattern for complex data
     test_data = (MockDataBuilder()
                 .with_repository(name="test-repo")
@@ -777,7 +777,7 @@ def example_usage():
                 .with_file_changes(count=3)
                 .with_analysis_result(status="success")
                 .build())
-    
+
     return {
         'commit': commit,
         'custom_commit': custom_commit,

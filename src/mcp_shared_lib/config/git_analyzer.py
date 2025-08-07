@@ -12,7 +12,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class GitAnalyzerSettings(BaseSettings):
+class GitAnalyzerSettings(BaseSettings):  # type: ignore[misc]
     """Git analysis configuration settings."""
 
     # Use model_config instead of nested Config class in Pydantic v2

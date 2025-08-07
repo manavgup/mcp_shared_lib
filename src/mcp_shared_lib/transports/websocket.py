@@ -36,11 +36,20 @@ class WebSocketTransport(HttpBasedTransport):
             )
 
             # Run the FastMCP server with WebSocket transport
-            server.run(
-                transport="websocket",
-                host=self._ws_config.host,
-                port=self._ws_config.port,
-            )
+            # Note: FastMCP may not support 'websocket' directly, using 'http' as fallback
+            try:
+                server.run(
+                    transport="websocket",  # type: ignore[arg-type]
+                    host=self._ws_config.host,
+                    port=self._ws_config.port,
+                )
+            except Exception as e:
+                self.logger.warning(f"WebSocket transport failed, trying HTTP: {e}")
+                server.run(
+                    transport="streamable-http",
+                    host=self._ws_config.host,
+                    port=self._ws_config.port,
+                )
 
         except KeyboardInterrupt:
             self.logger.info("Server stopped by user (Ctrl+C)")

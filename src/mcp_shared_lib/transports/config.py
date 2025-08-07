@@ -3,11 +3,13 @@
 import os
 from typing import Optional
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 from pydantic import BaseModel, Field
 
 
 class HTTPConfig(BaseModel):
+    """Define Configuration for connection over HTTP."""
+
     host: str = Field(default="0.0.0.0")
     port: int = Field(default=8000)
     cors_origins: Optional[list[str]] = Field(default_factory=lambda: ["*"])
@@ -16,12 +18,16 @@ class HTTPConfig(BaseModel):
 
 
 class WebSocketConfig(BaseModel):
+    """Define Configuration for connection over websocket."""
+
     host: str = Field(default="0.0.0.0")
     port: int = Field(default=8001)
     heartbeat_interval: int = Field(default=30)
 
 
 class SSEConfig(BaseModel):
+    """Define Configuration for connection over SSE."""
+
     host: str = Field(default="0.0.0.0")
     port: int = Field(default=8003)
     cors_origins: Optional[list[str]] = Field(default_factory=lambda: ["*"])
@@ -30,6 +36,8 @@ class SSEConfig(BaseModel):
 
 
 class LoggingConfig(BaseModel):
+    """Logging config."""
+
     level: str = Field(default="INFO")
     transport_details: bool = Field(default=True)
     request_logging: bool = Field(default=True)
@@ -37,14 +45,34 @@ class LoggingConfig(BaseModel):
 
 
 class TransportConfig(BaseModel):
+    """Base transport config."""
+
     type: str = Field(default="stdio")  # stdio, http, websocket, sse
     http: Optional[HTTPConfig] = None
     websocket: Optional[WebSocketConfig] = None
     sse: Optional[SSEConfig] = None
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
 
+    def get_transport_config(self) -> BaseModel | None:
+        """Get the configuration for the currently selected transport."""
+        if self.type == "http":
+            return self.http
+        if self.type == "websocket":
+            return self.websocket
+        if self.type == "sse":
+            return self.sse
+        return None
+
     @classmethod
-    def from_env(cls):
+    def from_env(cls) -> "TransportConfig":
+        """Create a TransportConfig instance from environment variables.
+
+        Reads transport configuration settings from environment variables,
+        including HTTP, WebSocket, SSE, and logging configurations.
+
+        Returns:
+            TransportConfig: Configured transport settings based on environment.
+        """
         ttype = os.environ.get("MCP_TRANSPORT", "stdio")
         http = None
         websocket = None
@@ -78,7 +106,8 @@ class TransportConfig(BaseModel):
         return cls(type=ttype, http=http, websocket=websocket, sse=sse, logging=logging)
 
     @classmethod
-    def from_file(cls, path):
+    def from_file(cls, path: str) -> "TransportConfig":
+        """Create a TransportConfig instance from a YAML file."""
         with open(path) as f:
             data = yaml.safe_load(f)
         ttype = data.get("transport", {}).get("type", "stdio")

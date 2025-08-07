@@ -1,5 +1,4 @@
-"""
-Base factory classes and utilities for the MCP test ecosystem.
+"""Base factory classes and utilities for the MCP test ecosystem.
 
 This module provides the foundation for all other factories, including
 a simple Faker implementation and base factory class.
@@ -10,12 +9,13 @@ import uuid
 from contextlib import suppress
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional, TypeVar
+
+T = TypeVar("T")
 
 
 class Faker:
-    """
-    Simple faker implementation for generating realistic test data.
+    """Simple faker implementation for generating realistic test data.
 
     This provides basic data generation without external dependencies.
     Can be easily extended or replaced with factory_boy's Faker if needed.
@@ -240,8 +240,7 @@ class Faker:
 
 
 class BaseFactory:
-    """
-    Base factory class providing common functionality for all factories.
+    """Base factory class providing common functionality for all factories.
 
     This class provides the foundation for creating test objects with
     realistic defaults and easy customization.
@@ -251,9 +250,8 @@ class BaseFactory:
     _model = dict
 
     @classmethod
-    def create(cls, **kwargs) -> Any:
-        """
-        Create an instance with optional overrides.
+    def create(cls, **kwargs: Any) -> Any:
+        """Create an instance with optional overrides.
 
         Args:
             **kwargs: Override any default attributes
@@ -268,18 +266,18 @@ class BaseFactory:
         defaults.update(kwargs)
 
         # Create and return the object
-        if cls._model == dict:
+        if cls._model is dict:
             return defaults
         else:
             return cls._model(**defaults)
 
     @classmethod
-    def build(cls, **kwargs) -> Any:
+    def build(cls, **kwargs: Any) -> Any:
         """Alias for create method for factory_boy compatibility."""
         return cls.create(**kwargs)
 
     @classmethod
-    def create_batch(cls, size: int, **kwargs) -> list[Any]:
+    def create_batch(cls, size: int, **kwargs: Any) -> list[Any]:
         """Create multiple instances."""
         return [cls.create(**kwargs) for _ in range(size)]
 
@@ -311,14 +309,21 @@ class BaseFactory:
 
 
 class TraitMixin:
-    """
-    Mixin for adding trait support to factories.
+    """Mixin for adding trait support to factories.
 
     Traits allow for easy creation of variations of the same factory.
     """
 
+    # Type hints for mypy - these should be overridden by concrete classes
+    _model: type[Any] = dict
+
     @classmethod
-    def with_traits(cls, *trait_names, **kwargs):
+    def _get_defaults(cls) -> dict[str, Any]:
+        """Extract default values from class attributes. Must be implemented by concrete classes."""
+        return {}
+
+    @classmethod
+    def with_traits(cls, *trait_names: str, **kwargs: Any) -> Any:
         """Create an instance with specified traits applied."""
         # Get base defaults
         defaults = cls._get_defaults()
@@ -334,20 +339,19 @@ class TraitMixin:
         defaults.update(kwargs)
 
         # Create the object
-        if cls._model == dict:
+        if cls._model is dict:
             return defaults
         else:
             return cls._model(**defaults)
 
 
 class SequenceMixin:
-    """
-    Mixin for adding sequence support to factories.
+    """Mixin for adding sequence support to factories.
 
     Sequences provide unique values across multiple instances.
     """
 
-    _sequences = {}
+    _sequences: dict[str, int] = {}
 
     @classmethod
     def sequence(cls, name: str, template: str = "{n}") -> str:
@@ -359,7 +363,7 @@ class SequenceMixin:
         return template.format(n=cls._sequences[name])
 
     @classmethod
-    def reset_sequences(cls):
+    def reset_sequences(cls) -> None:
         """Reset all sequences to 0."""
         cls._sequences.clear()
 
@@ -372,7 +376,7 @@ def create_realistic_timestamp(days_ago: int = 0, hours_ago: int = 0) -> datetim
     return base + offset
 
 
-def generate_commit_message(commit_type: str = None) -> str:
+def generate_commit_message(commit_type: Optional[str] = None) -> str:
     """Generate a realistic commit message."""
     if commit_type is None:
         commit_type = random.choice(

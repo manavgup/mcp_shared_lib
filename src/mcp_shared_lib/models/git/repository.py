@@ -25,7 +25,7 @@ class GitRemote(BaseModel):
     @field_validator("push_url", mode="before")
     @classmethod
     def set_push_url(cls, v: str | None, info: FieldValidationInfo) -> str:
-        """Default push_url to url if not provided."""
+        """Set push_url to url if not provided."""
         if not v and info.data and "url" in info.data:
             return str(info.data["url"])
         return v or ""

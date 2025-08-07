@@ -9,13 +9,14 @@ from mcp_shared_lib.config.git_analyzer import GitAnalyzerSettings
 from mcp_shared_lib.utils import logging_service
 
 if TYPE_CHECKING:
-    from fastmcp import Context
+    from fastmcp import Context  # unused: keep for TYPE_CHECKING
 
 
 class GitCommandError(Exception):
     """Exception raised when git command fails."""
 
     def __init__(self, command: list[str], return_code: int, stderr: str):
+        """Initialize git command error with details."""
         self.command = command
         self.return_code = return_code
         self.stderr = stderr
@@ -26,6 +27,7 @@ class GitClient:
     """Git command execution client with error handling."""
 
     def __init__(self, settings: GitAnalyzerSettings):
+        """Initialize git client with settings."""
         self.settings = settings
         self.logger = logging_service.get_logger(__name__)
 
@@ -60,7 +62,7 @@ class GitClient:
                         f"Git command failed (exit {result.returncode}): {stderr_str}"
                     )
                 raise GitCommandError(
-                    full_command, result.returncode, stderr_str
+                    full_command, result.returncode or 0, stderr_str
                 ) from None
 
             if ctx and stdout_str:
@@ -111,7 +113,7 @@ class GitClient:
                     await ctx.error(
                         f"Git command failed (exit {result.returncode}): {stderr_str}"
                     )
-                raise GitCommandError(full_command, result.returncode, stderr_str)
+                raise GitCommandError(full_command, result.returncode or 0, stderr_str)
 
             if ctx and status_output:
                 await ctx.debug(f"Git command output: {len(status_output)} characters")
@@ -208,7 +210,7 @@ class GitClient:
         self,
         repo_path: Path,
         file_path: str,
-        staged: bool = None,
+        staged: Optional[bool] = None,
         ctx: Optional["Context"] = None,
     ) -> dict[str, Any]:
         """Get diff statistics for a specific file.
@@ -252,7 +254,9 @@ class GitClient:
 
                     if ctx:
                         await ctx.debug(
-                            f"Auto-detected file state for {file_path}: index='{index_status}', working='{working_status}', using staged={staged}"
+                            f"Auto-detected file state for {file_path}: "
+                            f"index='{index_status}', working='{working_status}', "
+                            f"using staged={staged}"
                         )
 
             # Try to get numstat for the appropriate diff
@@ -302,7 +306,7 @@ class GitClient:
                     )
                 return {"lines_added": 0, "lines_deleted": 0, "is_binary": False}
 
-            if ctx:
+            if ctx and used_command:
                 await ctx.debug(
                     f"Successfully got diff stats using: {' '.join(used_command)}"
                 )
@@ -556,7 +560,7 @@ class GitClient:
                 is_bare = False
 
             # Get remote URLs
-            remotes = {}
+            remotes: dict[str, dict[str, str]] = {}
             try:
                 remote_output = await self.execute_command(
                     repo_path, ["remote", "-v"], ctx=ctx

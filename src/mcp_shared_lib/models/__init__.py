@@ -18,13 +18,9 @@ from mcp_shared_lib.models.base.common import (
     RiskLevel,
     RiskLevelType,
 )
-from mcp_shared_lib.models.git.changes import (
-    FileStatus,
-    StagedChanges,
-    WorkingDirectoryChanges,
-)
+from mcp_shared_lib.models.git.changes import StagedChanges, WorkingDirectoryChanges
 from mcp_shared_lib.models.git.commits import StashedChanges, UnpushedCommit
-from mcp_shared_lib.models.git.files import DiffHunk, FileDiff
+from mcp_shared_lib.models.git.files import DiffHunk, FileDiff, FileStatus
 from mcp_shared_lib.models.git.repository import GitBranch, GitRemote, LocalRepository
 
 __all__ = [

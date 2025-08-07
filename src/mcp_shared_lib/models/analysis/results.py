@@ -53,7 +53,7 @@ class OutstandingChangesAnalysis(BaseModel):
         if not self.repository_status:
             return False
         return (
-            self.repository_status.working_directory.has_changes
+            bool(self.repository_status.working_directory.has_changes)
             and not self.risk_assessment.is_high_risk
         )
 
@@ -64,8 +64,8 @@ class OutstandingChangesAnalysis(BaseModel):
             return False
         return (
             len(self.repository_status.unpushed_commits) > 0
-            and not self.repository_status.working_directory.has_changes
-            and not self.repository_status.staged_changes.ready_to_commit
+            and not bool(self.repository_status.working_directory.has_changes)
+            and not bool(self.repository_status.staged_changes.ready_to_commit)
         )
 
     @property
@@ -78,4 +78,9 @@ class OutstandingChangesAnalysis(BaseModel):
         )
 
     class Config:
+        """Pydantic configuration for the Analysis Results model.
+
+        Allows arbitrary types to be used within the model.
+        """
+
         arbitrary_types_allowed = True

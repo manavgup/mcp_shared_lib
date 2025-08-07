@@ -28,10 +28,10 @@ class LoggingService:
     - Logger name tracking
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize logging service."""
         self._level = LogLevel.INFO
-        self._subscribers: list[asyncio.Queue] = []
+        self._subscribers: list[asyncio.Queue[dict[str, Any]]] = []
         self._loggers: dict[str, logging.Logger] = {}
 
     async def initialize(self, level: LogLevel) -> None:
@@ -102,16 +102,17 @@ class LoggingService:
             return
 
         # Format notification message
-        message = {
+        log_data: dict[str, Any] = {
+            "level": level,
+            "data": data,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+        message: dict[str, Any] = {
             "type": "log",
-            "data": {
-                "level": level,
-                "data": data,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-            },
+            "data": log_data,
         }
         if logger_name:
-            message["data"]["logger"] = logger_name
+            log_data["logger"] = logger_name
 
         # Log through standard logging
         logger = self.get_logger(logger_name or "")
@@ -133,7 +134,7 @@ class LoggingService:
         Yields:
             Log message events
         """
-        queue: asyncio.Queue = asyncio.Queue()
+        queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
         self._subscribers.append(queue)
         try:
             while True:
@@ -181,6 +182,6 @@ def get_logger(name: str) -> logging.Logger:
     return logging_service.get_logger(name)
 
 
-def setup_logging(level: LogLevel) -> None:
-    """Setup logging service."""
-    logging_service.initialize(level)
+async def setup_logging(level: LogLevel) -> None:
+    """Set up the logging service with the specified level."""
+    await logging_service.initialize(level)
