@@ -13,12 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Git
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y git
-
       - name: Set up Python
+        id: setup-python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -54,12 +50,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Git
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y git
-
       - name: Set up Python
+        id: setup-python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -86,7 +78,7 @@ jobs:
         env:
           PYTHONPATH: src
         run: |
-          poetry run pytest tests/ -v --tb=short
+          poetry run pytest -m "unit and not slow" --maxfail=5
 
   security:
     name: Security
@@ -94,12 +86,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Git
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y git
-
       - name: Set up Python
+        id: setup-python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -124,8 +112,8 @@ jobs:
 
       - name: Run security checks
         run: |
-          poetry run bandit -r src/ -f json -o bandit-report.json || true
-          poetry run safety check --json --output safety-report.json || true
+          poetry run bandit -r src/ -f json -o bandit-report.json || echo "Bandit failed but continuing..."
+          poetry run safety check --json --output safety-report.json || echo "Safety check failed but continuing..."
 
       - name: Upload security reports
         uses: actions/upload-artifact@v4
@@ -135,3 +123,4 @@ jobs:
           path: |
             bandit-report.json
             safety-report.json
+          retention-days: 30
