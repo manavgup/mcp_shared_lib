@@ -266,7 +266,7 @@ class BaseFactory:
         defaults.update(kwargs)
 
         # Create and return the object
-        if cls._model == dict:
+        if cls._model is dict:
             return defaults
         else:
             return cls._model(**defaults)
@@ -339,7 +339,7 @@ class TraitMixin:
         defaults.update(kwargs)
 
         # Create the object
-        if cls._model == dict:
+        if cls._model is dict:
             return defaults
         else:
             return cls._model(**defaults)

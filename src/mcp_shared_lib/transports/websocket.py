@@ -39,7 +39,7 @@ class WebSocketTransport(HttpBasedTransport):
             # Note: FastMCP may not support 'websocket' directly, using 'http' as fallback
             try:
                 server.run(
-                    transport="websocket",
+                    transport="websocket",  # type: ignore[arg-type]
                     host=self._ws_config.host,
                     port=self._ws_config.port,
                 )

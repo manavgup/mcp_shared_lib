@@ -9,7 +9,7 @@ from mcp_shared_lib.config.git_analyzer import GitAnalyzerSettings
 from mcp_shared_lib.utils import logging_service
 
 if TYPE_CHECKING:
-    from fastmcp import Context  # noqa: vulture
+    from fastmcp import Context  # unused: keep for TYPE_CHECKING
 
 
 class GitCommandError(Exception):

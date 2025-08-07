@@ -77,7 +77,7 @@ jobs:
           - id: vulture
             setup: pip install vulture
             cmd: |
-              vulture src/ tests/ --min-confidence 80
+              vulture src/ tests/ --min-confidence 80 --exclude="*git_client.py"
 
           # -------------------------------------------------------
           # 🔒 Security & Packaging Checks

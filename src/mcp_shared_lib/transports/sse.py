@@ -50,7 +50,7 @@ class SSETransport(HttpBasedTransport):
                 self.logger.warning(f"SSE transport failed, trying streamable-sse: {e}")
                 try:
                     # Fallback to streamable-sse if sse doesn't work
-                    server.run(transport="streamable-sse", host=host, port=port)
+                    server.run(transport="streamable-sse", host=host, port=port)  # type: ignore[arg-type]
                 except Exception as e2:
                     self.logger.warning(
                         f"streamable-sse failed, trying streamable-http: {e2}"

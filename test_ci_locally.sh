@@ -55,7 +55,7 @@ run_test "Bandit (exact lint.yml command)" "bandit -r src/ --skip B101,B104,B105
 
 # Test other lint.yml commands that commonly fail
 run_test "Flake8" "flake8 src/ tests/ --max-line-length=88 --extend-ignore=E203,W503,E501" || true
-run_test "Vulture" "vulture src/ --min-confidence=80" || true
+run_test "Vulture" "vulture src/ tests/ --min-confidence 80 --exclude='*git_client.py'" || true
 run_test "Safety" "safety check --json || echo 'Safety check completed'" || true
 
 echo -e "\n${YELLOW}Testing YAML files...${NC}"

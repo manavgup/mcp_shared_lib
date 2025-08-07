@@ -234,7 +234,7 @@ ignore_missing_imports = true
 ignore_errors = true
 
 [[tool.mypy.overrides]]
-module = ["mcp_shared_lib.config.*", "mcp_shared_lib.transports.config"]
+module = ["mcp_shared_lib.config.*", "mcp_shared_lib.transports.*"]
 warn_unused_ignores = false
 
 [[tool.mypy.overrides]]
