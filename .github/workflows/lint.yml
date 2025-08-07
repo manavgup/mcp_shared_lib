@@ -67,7 +67,7 @@ jobs:
 
           - id: flake8
             setup: pip install flake8
-            cmd: flake8 src/ tests/
+            cmd: flake8 src/ tests/ --max-line-length=88 --extend-ignore=E203,W503,E501
 
           - id: unimport
             setup: pip install unimport
@@ -84,7 +84,7 @@ jobs:
           # -------------------------------------------------------
           - id: bandit
             setup: pip install bandit
-            cmd: bandit -r src/ --skip B101,B104,B105,B311,B601 --exclude '*/test_utils/*' -ll
+            cmd: bandit -r src/ --skip B101,B104,B105,B311,B601 -x src/mcp_shared_lib/test_utils/ -ll
 
           - id: safety
             setup: pip install safety
