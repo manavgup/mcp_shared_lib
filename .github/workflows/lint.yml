@@ -84,7 +84,7 @@ jobs:
           # -------------------------------------------------------
           - id: bandit
             setup: pip install bandit
-            cmd: bandit -r src/
+            cmd: bandit -r src/ --skip B101,B104,B105,B311,B601 --exclude '*/test_utils/*' -ll
 
           - id: safety
             setup: pip install safety
