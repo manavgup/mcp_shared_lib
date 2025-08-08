@@ -7,30 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2025-08-07
+
 ### Added
-- Initial project setup
-- Core MCP transport layer with pluggable transports (stdio, HTTP, WebSocket, SSE)
-- Comprehensive Git data models for repository analysis
-- GitClient for async Git operations
-- Test infrastructure with factory patterns for realistic test data
-- Pydantic-based configuration system with environment support
-- Comprehensive test suite with unit and integration tests
-- Documentation and setup guides
+- Production-ready package configuration
+- Enhanced metadata for distribution
+- Improved project documentation
 
 ### Changed
-- N/A
-
-### Deprecated
-- N/A
-
-### Removed
-- N/A
+- Bumped version to 0.2.0 for stable release
+- Enhanced package metadata and classifiers
+- Improved transport layer stability
 
 ### Fixed
-- N/A
-
-### Security
-- N/A
+- Various minor bug fixes and improvements
 
 ## [0.1.0] - 2025-08-07
 
