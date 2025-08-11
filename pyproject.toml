@@ -156,7 +156,7 @@ log_cli_date_format = "%Y-%m-%d %H:%M:%S"
 # Ruff Configuration
 [tool.ruff]
 line-length = 88
-target-version = "py39"
+target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "B", "C4", "UP", "ARG", "SIM"]
@@ -173,7 +173,7 @@ split-on-trailing-comma = true
 # Black Configuration
 [tool.black]
 line-length = 88
-target-version = ['py39']
+target-version = ['py310', 'py311', 'py312']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
