@@ -110,6 +110,7 @@ class TestLocalRepository:
     def teardown_method(self):
         """Clean up temporary directory."""
         import shutil
+
         shutil.rmtree(self.temp_dir)
 
     def test_local_repository_creation(self):
@@ -336,6 +337,7 @@ class TestModelIntegration:
     def teardown_method(self):
         """Clean up."""
         import shutil
+
         shutil.rmtree(self.temp_dir)
 
     def test_repository_with_complex_structure(self):

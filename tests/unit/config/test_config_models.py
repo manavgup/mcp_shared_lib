@@ -42,11 +42,11 @@ class TestGitAnalyzerSettings:
 
     def test_git_analyzer_invalid_bounds(self):
         """Exceeding bounds raises validation errors."""
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             GitAnalyzerSettings(max_diff_lines=20000)  # > le=10000
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             GitAnalyzerSettings(max_commits_to_analyze=0)  # < ge=1
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             GitAnalyzerSettings(large_file_threshold=50)  # < ge=100
 
 

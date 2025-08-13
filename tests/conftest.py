@@ -339,9 +339,7 @@ def mock_fastmcp_server():
 def create_test_files():
     """Create a factory fixture for creating test files in a directory."""
 
-    def _create_files(
-        base_dir: Path, file_structure: dict[str, str | bytes | dict]
-    ):
+    def _create_files(base_dir: Path, file_structure: dict[str, str | bytes | dict]):
         """Create files and directories based on a nested dictionary structure.
 
         Args:

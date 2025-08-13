@@ -223,7 +223,9 @@ class TestCommitMessageFormatting:
 
     def test_format_commit_message_long(self):
         """Test formatting long commit message."""
-        message = "This is a very long commit message that exceeds the maximum allowed length"
+        message = (
+            "This is a very long commit message that exceeds the maximum allowed length"
+        )
         result = format_commit_message(message, max_length=50)
         # The function truncates to max_length-3 and adds "..."
         expected = "This is a very long commit message that exceeds..."
@@ -363,7 +365,9 @@ class TestDiffStatsParsing:
 
     def test_parse_diff_stats_complex(self):
         """Test parsing complex diff stats."""
-        stats_line = "10 files changed, 1,234 insertions(+), 567 deletions(-), 89 modifications"
+        stats_line = (
+            "10 files changed, 1,234 insertions(+), 567 deletions(-), 89 modifications"
+        )
         insertions, deletions = parse_diff_stats(stats_line)
 
         # The regex only matches the first occurrence of digits before "insertion"

@@ -160,6 +160,7 @@ class TestRepositoryModels:
         """Test RepositoryStatus with various changes."""
         # Create a temporary directory for the repository
         import tempfile
+
         temp_dir = tempfile.mkdtemp()
         git_dir = Path(temp_dir) / ".git"
         git_dir.mkdir()
@@ -173,12 +174,8 @@ class TestRepositoryModels:
             )
 
             working_dir = WorkingDirectoryChanges(
-                modified_files=[
-                    FileStatus(path="src/main.py", status_code="M")
-                ],
-                added_files=[
-                    FileStatus(path="src/new.py", status_code="A")
-                ],
+                modified_files=[FileStatus(path="src/main.py", status_code="M")],
+                added_files=[FileStatus(path="src/new.py", status_code="A")],
             )
 
             staged_changes = StagedChanges(
@@ -219,7 +216,9 @@ class TestRepositoryModels:
             )
 
             assert repo_status.has_outstanding_work is True
-            assert repo_status.total_outstanding_changes == 4  # 2 working + 1 staged + 1 unpushed
+            assert (
+                repo_status.total_outstanding_changes == 4
+            )  # 2 working + 1 staged + 1 unpushed
             assert repo_status.working_directory.total_files == 2
             assert repo_status.staged_changes.total_staged == 1
             assert len(repo_status.unpushed_commits) == 1
@@ -227,11 +226,13 @@ class TestRepositoryModels:
         finally:
             # Clean up
             import shutil
+
             shutil.rmtree(temp_dir)
 
     def test_repository_status_clean(self):
         """Test RepositoryStatus with no changes."""
         import tempfile
+
         temp_dir = tempfile.mkdtemp()
         git_dir = Path(temp_dir) / ".git"
         git_dir.mkdir()
@@ -271,6 +272,7 @@ class TestRepositoryModels:
 
         finally:
             import shutil
+
             shutil.rmtree(temp_dir)
 
 

@@ -17,7 +17,7 @@ def git_settings():
         max_commits_to_analyze=50,
         include_binary_files=False,
         large_file_threshold=500,
-        log_level="DEBUG"
+        log_level="DEBUG",
     )
 
 
@@ -76,16 +76,20 @@ class TestGitClient:
 
         assert client.settings == git_settings
         assert client.logger is not None
-        assert hasattr(client, 'execute_command')
+        assert hasattr(client, "execute_command")
 
     @pytest.mark.asyncio
-    async def test_execute_command_success(self, git_client, temp_repo_path, mock_context):
+    async def test_execute_command_success(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test successful command execution."""
         mock_process = Mock()
         mock_process.returncode = 0
         mock_process.communicate = AsyncMock(return_value=(b"output\n", b""))
 
-        with patch('asyncio.create_subprocess_exec', return_value=mock_process) as mock_exec:
+        with patch(
+            "asyncio.create_subprocess_exec", return_value=mock_process
+        ) as mock_exec:
             result = await git_client.execute_command(
                 temp_repo_path, ["status"], ctx=mock_context
             )
@@ -95,7 +99,9 @@ class TestGitClient:
             mock_context.debug.assert_called()
 
     @pytest.mark.asyncio
-    async def test_execute_command_failure(self, git_client, temp_repo_path, mock_context):
+    async def test_execute_command_failure(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test command execution failure."""
         mock_process = Mock()
         mock_process.returncode = 128
@@ -103,7 +109,7 @@ class TestGitClient:
             return_value=(b"", b"fatal: not a git repository\n")
         )
 
-        with patch('asyncio.create_subprocess_exec', return_value=mock_process):
+        with patch("asyncio.create_subprocess_exec", return_value=mock_process):
             with pytest.raises(GitCommandError) as exc_info:
                 await git_client.execute_command(
                     temp_repo_path, ["status"], ctx=mock_context
@@ -121,7 +127,7 @@ class TestGitClient:
         mock_process.returncode = 1
         mock_process.communicate = AsyncMock(return_value=(b"", b"some error\n"))
 
-        with patch('asyncio.create_subprocess_exec', return_value=mock_process):
+        with patch("asyncio.create_subprocess_exec", return_value=mock_process):
             # Should not raise exception when check=False
             result = await git_client.execute_command(
                 temp_repo_path, ["status"], check=False
@@ -129,9 +135,11 @@ class TestGitClient:
             assert result == ""
 
     @pytest.mark.asyncio
-    async def test_execute_command_file_not_found(self, git_client, temp_repo_path, mock_context):
+    async def test_execute_command_file_not_found(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test command execution when git is not found."""
-        with patch('asyncio.create_subprocess_exec', side_effect=FileNotFoundError()):
+        with patch("asyncio.create_subprocess_exec", side_effect=FileNotFoundError()):
             with pytest.raises(GitCommandError) as exc_info:
                 await git_client.execute_command(
                     temp_repo_path, ["status"], ctx=mock_context
@@ -142,9 +150,13 @@ class TestGitClient:
             mock_context.error.assert_called()
 
     @pytest.mark.asyncio
-    async def test_execute_command_unexpected_error(self, git_client, temp_repo_path, mock_context):
+    async def test_execute_command_unexpected_error(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test command execution with unexpected error."""
-        with patch('asyncio.create_subprocess_exec', side_effect=RuntimeError("Unexpected")):
+        with patch(
+            "asyncio.create_subprocess_exec", side_effect=RuntimeError("Unexpected")
+        ):
             with pytest.raises(GitCommandError) as exc_info:
                 await git_client.execute_command(
                     temp_repo_path, ["status"], ctx=mock_context
@@ -162,7 +174,7 @@ class TestGitClient:
         mock_process.returncode = 0
         mock_process.communicate = AsyncMock(return_value=(status_output.encode(), b""))
 
-        with patch('asyncio.create_subprocess_exec', return_value=mock_process):
+        with patch("asyncio.create_subprocess_exec", return_value=mock_process):
             result = await git_client.get_status(temp_repo_path, mock_context)
 
             assert "files" in result
@@ -181,36 +193,42 @@ class TestGitClient:
         mock_process.returncode = 0
         mock_process.communicate = AsyncMock(return_value=(b"", b""))
 
-        with patch('asyncio.create_subprocess_exec', return_value=mock_process):
+        with patch("asyncio.create_subprocess_exec", return_value=mock_process):
             result = await git_client.get_status(temp_repo_path)
 
             assert len(result["files"]) == 0
 
     @pytest.mark.asyncio
-    async def test_get_status_with_rename(self, git_client, temp_repo_path, mock_context):
+    async def test_get_status_with_rename(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test git status with renamed files."""
         status_output = "R  old_name.py -> new_name.py\n M modified.py"
         mock_process = Mock()
         mock_process.returncode = 0
         mock_process.communicate = AsyncMock(return_value=(status_output.encode(), b""))
 
-        with patch('asyncio.create_subprocess_exec', return_value=mock_process):
+        with patch("asyncio.create_subprocess_exec", return_value=mock_process):
             result = await git_client.get_status(temp_repo_path, mock_context)
 
             assert len(result["files"]) == 2
-            rename_file = next(f for f in result["files"] if f["filename"] == "new_name.py")
+            rename_file = next(
+                f for f in result["files"] if f["filename"] == "new_name.py"
+            )
             assert rename_file["index_status"] == "R"
             assert rename_file["working_status"] is None
 
     @pytest.mark.asyncio
-    async def test_get_status_compact_format(self, git_client, temp_repo_path, mock_context):
+    async def test_get_status_compact_format(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test git status with compact format (no space separator)."""
         status_output = "MMfile.py\nA file2.py"
         mock_process = Mock()
         mock_process.returncode = 0
         mock_process.communicate = AsyncMock(return_value=(status_output.encode(), b""))
 
-        with patch('asyncio.create_subprocess_exec', return_value=mock_process):
+        with patch("asyncio.create_subprocess_exec", return_value=mock_process):
             result = await git_client.get_status(temp_repo_path, mock_context)
 
             assert len(result["files"]) == 2
@@ -223,17 +241,21 @@ class TestGitClient:
         """Test git status failure."""
         mock_process = Mock()
         mock_process.returncode = 128
-        mock_process.communicate = AsyncMock(return_value=(b"", b"fatal: not a git repository\n"))
+        mock_process.communicate = AsyncMock(
+            return_value=(b"", b"fatal: not a git repository\n")
+        )
 
-        with patch('asyncio.create_subprocess_exec', return_value=mock_process):
+        with patch("asyncio.create_subprocess_exec", return_value=mock_process):
             with pytest.raises(GitCommandError):
                 await git_client.get_status(temp_repo_path, mock_context)
             mock_context.error.assert_called()
 
     @pytest.mark.asyncio
-    async def test_get_status_file_not_found(self, git_client, temp_repo_path, mock_context):
+    async def test_get_status_file_not_found(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test git status when git is not found."""
-        with patch('asyncio.create_subprocess_exec', side_effect=FileNotFoundError()):
+        with patch("asyncio.create_subprocess_exec", side_effect=FileNotFoundError()):
             with pytest.raises(GitCommandError) as exc_info:
                 await git_client.get_status(temp_repo_path, mock_context)
 
@@ -241,9 +263,13 @@ class TestGitClient:
             mock_context.error.assert_called()
 
     @pytest.mark.asyncio
-    async def test_get_status_unexpected_error(self, git_client, temp_repo_path, mock_context):
+    async def test_get_status_unexpected_error(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test git status with unexpected error."""
-        with patch('asyncio.create_subprocess_exec', side_effect=RuntimeError("Unexpected")):
+        with patch(
+            "asyncio.create_subprocess_exec", side_effect=RuntimeError("Unexpected")
+        ):
             with pytest.raises(GitCommandError) as exc_info:
                 await git_client.get_status(temp_repo_path, mock_context)
 
@@ -266,7 +292,7 @@ index 1234567..abcdefg 100644
         mock_process.returncode = 0
         mock_process.communicate = AsyncMock(return_value=(diff_output.encode(), b""))
 
-        with patch('asyncio.create_subprocess_exec', return_value=mock_process):
+        with patch("asyncio.create_subprocess_exec", return_value=mock_process):
             result = await git_client.get_diff(
                 temp_repo_path, staged=False, file_path="file.py", ctx=mock_context
             )
@@ -284,7 +310,7 @@ index 1234567..abcdefg 100644
         mock_process.returncode = 0
         mock_process.communicate = AsyncMock(return_value=(diff_output.encode(), b""))
 
-        with patch('asyncio.create_subprocess_exec', return_value=mock_process):
+        with patch("asyncio.create_subprocess_exec", return_value=mock_process):
             result = await git_client.get_diff(
                 temp_repo_path, staged=True, ctx=mock_context
             )
@@ -299,14 +325,16 @@ index 1234567..abcdefg 100644
         mock_process.returncode = 0
         mock_process.communicate = AsyncMock(return_value=(b"", b""))
 
-        with patch('asyncio.create_subprocess_exec', return_value=mock_process):
+        with patch("asyncio.create_subprocess_exec", return_value=mock_process):
             result = await git_client.get_diff(temp_repo_path, staged=False)
 
             assert result == ""
             assert isinstance(result, str)
 
     @pytest.mark.asyncio
-    async def test_get_diff_stats_success(self, git_client, temp_repo_path, mock_context):
+    async def test_get_diff_stats_success(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test successful diff stats retrieval."""
         # Mock the status check first
         status_output = " M test.py"
@@ -314,7 +342,7 @@ index 1234567..abcdefg 100644
         mock_process.returncode = 0
         mock_process.communicate = AsyncMock(return_value=(status_output.encode(), b""))
 
-        with patch('asyncio.create_subprocess_exec', return_value=mock_process):
+        with patch("asyncio.create_subprocess_exec", return_value=mock_process):
             result = await git_client.get_diff_stats(
                 temp_repo_path, file_path="test.py", ctx=mock_context
             )
@@ -325,17 +353,24 @@ index 1234567..abcdefg 100644
             mock_context.debug.assert_called()
 
     @pytest.mark.asyncio
-    async def test_get_diff_stats_binary_file(self, git_client, temp_repo_path, mock_context):
+    async def test_get_diff_stats_binary_file(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test diff stats for binary file."""
         # Mock numstat output for binary file
         numstat_output = "-\t-\tbinary_file.bin"
         mock_process = Mock()
         mock_process.returncode = 0
-        mock_process.communicate = AsyncMock(return_value=(numstat_output.encode(), b""))
+        mock_process.communicate = AsyncMock(
+            return_value=(numstat_output.encode(), b"")
+        )
 
-        with patch('asyncio.create_subprocess_exec', return_value=mock_process):
+        with patch("asyncio.create_subprocess_exec", return_value=mock_process):
             result = await git_client.get_diff_stats(
-                temp_repo_path, file_path="binary_file.bin", staged=False, ctx=mock_context
+                temp_repo_path,
+                file_path="binary_file.bin",
+                staged=False,
+                ctx=mock_context,
             )
 
             assert result["is_binary"] is True
@@ -343,7 +378,9 @@ index 1234567..abcdefg 100644
             assert result["lines_deleted"] == 0
 
     @pytest.mark.asyncio
-    async def test_get_diff_stats_staged_file(self, git_client, temp_repo_path, mock_context):
+    async def test_get_diff_stats_staged_file(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test diff stats for staged file."""
         # Mock status to indicate staged file
         status_output = "M  staged_file.py"
@@ -351,7 +388,7 @@ index 1234567..abcdefg 100644
         mock_process.returncode = 0
         mock_process.communicate = AsyncMock(return_value=(status_output.encode(), b""))
 
-        with patch('asyncio.create_subprocess_exec', return_value=mock_process):
+        with patch("asyncio.create_subprocess_exec", return_value=mock_process):
             result = await git_client.get_diff_stats(
                 temp_repo_path, file_path="staged_file.py", ctx=mock_context
             )
@@ -361,8 +398,11 @@ index 1234567..abcdefg 100644
             assert "is_binary" in result
 
     @pytest.mark.asyncio
-    async def test_get_diff_stats_fallback_command(self, git_client, temp_repo_path, mock_context):
+    async def test_get_diff_stats_fallback_command(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test diff stats with fallback command."""
+
         # Mock first command to fail, second to succeed
         def create_mock_process(output, returncode=0):
             mock_process = Mock()
@@ -370,11 +410,11 @@ index 1234567..abcdefg 100644
             mock_process.communicate = AsyncMock(return_value=(output.encode(), b""))
             return mock_process
 
-        with patch('asyncio.create_subprocess_exec') as mock_exec:
+        with patch("asyncio.create_subprocess_exec") as mock_exec:
             # First command fails
             mock_exec.side_effect = [
                 create_mock_process("", returncode=1),  # First command fails
-                create_mock_process("10\t5\ttest.py")  # Second command succeeds
+                create_mock_process("10\t5\ttest.py"),  # Second command succeeds
             ]
 
             result = await git_client.get_diff_stats(
@@ -386,7 +426,9 @@ index 1234567..abcdefg 100644
             assert result["is_binary"] is False
 
     @pytest.mark.asyncio
-    async def test_get_diff_stats_no_output(self, git_client, temp_repo_path, mock_context):
+    async def test_get_diff_stats_no_output(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test diff stats with no output."""
         # Mock status to indicate file exists
         status_output = " M test.py"
@@ -394,7 +436,7 @@ index 1234567..abcdefg 100644
         mock_process.returncode = 0
         mock_process.communicate = AsyncMock(return_value=(status_output.encode(), b""))
 
-        with patch('asyncio.create_subprocess_exec', return_value=mock_process):
+        with patch("asyncio.create_subprocess_exec", return_value=mock_process):
             result = await git_client.get_diff_stats(
                 temp_repo_path, file_path="test.py", ctx=mock_context
             )
@@ -404,16 +446,20 @@ index 1234567..abcdefg 100644
             assert result["is_binary"] is False
 
     @pytest.mark.asyncio
-    async def test_get_diff_stats_parse_error(self, git_client, temp_repo_path, mock_context):
+    async def test_get_diff_stats_parse_error(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test diff stats with parsing error."""
         # Mock status to indicate file exists
         # Mock numstat output that can't be parsed
         numstat_output = "invalid\tformat\ttest.py"
         mock_process = Mock()
         mock_process.returncode = 0
-        mock_process.communicate = AsyncMock(return_value=(numstat_output.encode(), b""))
+        mock_process.communicate = AsyncMock(
+            return_value=(numstat_output.encode(), b"")
+        )
 
-        with patch('asyncio.create_subprocess_exec', return_value=mock_process):
+        with patch("asyncio.create_subprocess_exec", return_value=mock_process):
             result = await git_client.get_diff_stats(
                 temp_repo_path, file_path="test.py", ctx=mock_context
             )
@@ -424,9 +470,13 @@ index 1234567..abcdefg 100644
             mock_context.warning.assert_called()
 
     @pytest.mark.asyncio
-    async def test_get_diff_stats_exception_handling(self, git_client, temp_repo_path, mock_context):
+    async def test_get_diff_stats_exception_handling(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test diff stats exception handling."""
-        with patch('asyncio.create_subprocess_exec', side_effect=RuntimeError("Test error")):
+        with patch(
+            "asyncio.create_subprocess_exec", side_effect=RuntimeError("Test error")
+        ):
             result = await git_client.get_diff_stats(
                 temp_repo_path, file_path="test.py", ctx=mock_context
             )
@@ -437,7 +487,9 @@ index 1234567..abcdefg 100644
             mock_context.error.assert_called()
 
     @pytest.mark.asyncio
-    async def test_get_unpushed_commits_success(self, git_client, temp_repo_path, mock_context):
+    async def test_get_unpushed_commits_success(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test successful unpushed commits retrieval."""
         # Mock current branch
         branch_output = "main"
@@ -450,10 +502,10 @@ index 1234567..abcdefg 100644
             mock_process.communicate = AsyncMock(return_value=(output.encode(), b""))
             return mock_process
 
-        with patch('asyncio.create_subprocess_exec') as mock_exec:
+        with patch("asyncio.create_subprocess_exec") as mock_exec:
             mock_exec.side_effect = [
                 create_mock_process(branch_output),
-                create_mock_process(commits_output)
+                create_mock_process(commits_output),
             ]
 
             result = await git_client.get_unpushed_commits(
@@ -466,7 +518,9 @@ index 1234567..abcdefg 100644
             mock_context.debug.assert_called()
 
     @pytest.mark.asyncio
-    async def test_get_unpushed_commits_upstream_not_found(self, git_client, temp_repo_path, mock_context):
+    async def test_get_unpushed_commits_upstream_not_found(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test unpushed commits when upstream doesn't exist."""
         # Mock current branch
         branch_output = "feature"
@@ -480,11 +534,11 @@ index 1234567..abcdefg 100644
             mock_process.communicate = AsyncMock(return_value=(output.encode(), b""))
             return mock_process
 
-        with patch('asyncio.create_subprocess_exec') as mock_exec:
+        with patch("asyncio.create_subprocess_exec") as mock_exec:
             mock_exec.side_effect = [
                 create_mock_process(branch_output),
                 create_mock_process("", returncode=1),  # Upstream check fails
-                create_mock_process(commits_output)  # Recent commits
+                create_mock_process(commits_output),  # Recent commits
             ]
 
             result = await git_client.get_unpushed_commits(
@@ -496,7 +550,9 @@ index 1234567..abcdefg 100644
             mock_context.warning.assert_called()
 
     @pytest.mark.asyncio
-    async def test_get_unpushed_commits_json_parse_error(self, git_client, temp_repo_path, mock_context):
+    async def test_get_unpushed_commits_json_parse_error(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test unpushed commits with JSON parse error."""
         # Mock current branch
         branch_output = "main"
@@ -509,10 +565,10 @@ index 1234567..abcdefg 100644
             mock_process.communicate = AsyncMock(return_value=(output.encode(), b""))
             return mock_process
 
-        with patch('asyncio.create_subprocess_exec') as mock_exec:
+        with patch("asyncio.create_subprocess_exec") as mock_exec:
             mock_exec.side_effect = [
                 create_mock_process(branch_output),
-                create_mock_process(commits_output)
+                create_mock_process(commits_output),
             ]
 
             result = await git_client.get_unpushed_commits(
@@ -523,9 +579,14 @@ index 1234567..abcdefg 100644
             mock_context.warning.assert_called()
 
     @pytest.mark.asyncio
-    async def test_get_unpushed_commits_git_error(self, git_client, temp_repo_path, mock_context):
+    async def test_get_unpushed_commits_git_error(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test unpushed commits with git error."""
-        with patch('asyncio.create_subprocess_exec', side_effect=GitCommandError(["git", "log"], 1, "Error")):
+        with patch(
+            "asyncio.create_subprocess_exec",
+            side_effect=GitCommandError(["git", "log"], 1, "Error"),
+        ):
             result = await git_client.get_unpushed_commits(
                 temp_repo_path, remote="origin", ctx=mock_context
             )
@@ -534,7 +595,9 @@ index 1234567..abcdefg 100644
             mock_context.warning.assert_called()
 
     @pytest.mark.asyncio
-    async def test_get_stash_list_success(self, git_client, temp_repo_path, mock_context):
+    async def test_get_stash_list_success(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test successful stash list retrieval."""
         stash_output = "stash@{0}|WIP on main: 1234567 Last commit|2 hours ago\nstash@{1}|WIP on feature: abcdefg Feature work|1 day ago"
 
@@ -542,7 +605,7 @@ index 1234567..abcdefg 100644
         mock_process.returncode = 0
         mock_process.communicate = AsyncMock(return_value=(stash_output.encode(), b""))
 
-        with patch('asyncio.create_subprocess_exec', return_value=mock_process):
+        with patch("asyncio.create_subprocess_exec", return_value=mock_process):
             result = await git_client.get_stash_list(temp_repo_path, ctx=mock_context)
 
             assert len(result) == 2
@@ -559,31 +622,39 @@ index 1234567..abcdefg 100644
         mock_process.returncode = 0
         mock_process.communicate = AsyncMock(return_value=(b"", b""))
 
-        with patch('asyncio.create_subprocess_exec', return_value=mock_process):
+        with patch("asyncio.create_subprocess_exec", return_value=mock_process):
             result = await git_client.get_stash_list(temp_repo_path, ctx=mock_context)
 
             assert len(result) == 0
             mock_context.debug.assert_called()
 
     @pytest.mark.asyncio
-    async def test_get_stash_list_git_error(self, git_client, temp_repo_path, mock_context):
+    async def test_get_stash_list_git_error(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test stash list with git error."""
-        with patch('asyncio.create_subprocess_exec', side_effect=GitCommandError(["git", "stash"], 1, "Error")):
+        with patch(
+            "asyncio.create_subprocess_exec",
+            side_effect=GitCommandError(["git", "stash"], 1, "Error"),
+        ):
             result = await git_client.get_stash_list(temp_repo_path, ctx=mock_context)
 
             assert len(result) == 0
             mock_context.warning.assert_called()
 
     @pytest.mark.asyncio
-    async def test_get_branch_info_success(self, git_client, temp_repo_path, mock_context):
+    async def test_get_branch_info_success(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test successful branch info retrieval."""
+
         def create_mock_process(output):
             mock_process = Mock()
             mock_process.returncode = 0
             mock_process.communicate = AsyncMock(return_value=(output.encode(), b""))
             return mock_process
 
-        with patch('asyncio.create_subprocess_exec') as mock_exec:
+        with patch("asyncio.create_subprocess_exec") as mock_exec:
             mock_exec.side_effect = [
                 create_mock_process("main"),  # current branch
                 create_mock_process("origin/main"),  # upstream branch
@@ -601,15 +672,18 @@ index 1234567..abcdefg 100644
             mock_context.debug.assert_called()
 
     @pytest.mark.asyncio
-    async def test_get_branch_info_no_upstream(self, git_client, temp_repo_path, mock_context):
+    async def test_get_branch_info_no_upstream(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test branch info when no upstream is configured."""
+
         def create_mock_process(output, returncode=0):
             mock_process = Mock()
             mock_process.returncode = returncode
             mock_process.communicate = AsyncMock(return_value=(output.encode(), b""))
             return mock_process
 
-        with patch('asyncio.create_subprocess_exec') as mock_exec:
+        with patch("asyncio.create_subprocess_exec") as mock_exec:
             mock_exec.side_effect = [
                 create_mock_process("main"),  # current branch
                 create_mock_process("", returncode=1),  # upstream check fails
@@ -626,15 +700,18 @@ index 1234567..abcdefg 100644
             mock_context.debug.assert_called()
 
     @pytest.mark.asyncio
-    async def test_get_branch_info_ahead_behind_parse_error(self, git_client, temp_repo_path, mock_context):
+    async def test_get_branch_info_ahead_behind_parse_error(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test branch info with ahead/behind parse error."""
+
         def create_mock_process(output, returncode=0):
             mock_process = Mock()
             mock_process.returncode = returncode
             mock_process.communicate = AsyncMock(return_value=(output.encode(), b""))
             return mock_process
 
-        with patch('asyncio.create_subprocess_exec') as mock_exec:
+        with patch("asyncio.create_subprocess_exec") as mock_exec:
             mock_exec.side_effect = [
                 create_mock_process("main"),  # current branch
                 create_mock_process("origin/main"),  # upstream branch
@@ -652,15 +729,18 @@ index 1234567..abcdefg 100644
             mock_context.warning.assert_called()
 
     @pytest.mark.asyncio
-    async def test_get_branch_info_head_commit_error(self, git_client, temp_repo_path, mock_context):
+    async def test_get_branch_info_head_commit_error(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test branch info when HEAD commit retrieval fails."""
+
         def create_mock_process(output, returncode=0):
             mock_process = Mock()
             mock_process.returncode = returncode
             mock_process.communicate = AsyncMock(return_value=(output.encode(), b""))
             return mock_process
 
-        with patch('asyncio.create_subprocess_exec') as mock_exec:
+        with patch("asyncio.create_subprocess_exec") as mock_exec:
             mock_exec.side_effect = [
                 create_mock_process("main"),  # current branch
                 create_mock_process("origin/main"),  # upstream branch
@@ -678,9 +758,14 @@ index 1234567..abcdefg 100644
             mock_context.warning.assert_called()
 
     @pytest.mark.asyncio
-    async def test_get_branch_info_git_error(self, git_client, temp_repo_path, mock_context):
+    async def test_get_branch_info_git_error(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test branch info with git error."""
-        with patch('asyncio.create_subprocess_exec', side_effect=GitCommandError(["git", "branch"], 1, "Error")):
+        with patch(
+            "asyncio.create_subprocess_exec",
+            side_effect=GitCommandError(["git", "branch"], 1, "Error"),
+        ):
             result = await git_client.get_branch_info(temp_repo_path, ctx=mock_context)
 
             assert result["current_branch"] == "unknown"
@@ -691,23 +776,32 @@ index 1234567..abcdefg 100644
             mock_context.error.assert_called()
 
     @pytest.mark.asyncio
-    async def test_get_repository_info_success(self, git_client, temp_repo_path, mock_context):
+    async def test_get_repository_info_success(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test successful repository info retrieval."""
+
         def create_mock_process(output, returncode=0):
             mock_process = Mock()
             mock_process.returncode = returncode
             mock_process.communicate = AsyncMock(return_value=(output.encode(), b""))
             return mock_process
 
-        with patch('asyncio.create_subprocess_exec') as mock_exec:
+        with patch("asyncio.create_subprocess_exec") as mock_exec:
             # Mock the bare repository check to fail (indicating non-bare repo)
             mock_exec.side_effect = [
-                create_mock_process("false", returncode=1),  # is-bare-repository (fails = non-bare)
-                create_mock_process("origin\thttps://github.com/user/repo.git\t(fetch)\norigin\thttps://github.com/user/repo.git\t(push)"),  # remote -v
+                create_mock_process(
+                    "false", returncode=1
+                ),  # is-bare-repository (fails = non-bare)
+                create_mock_process(
+                    "origin\thttps://github.com/user/repo.git\t(fetch)\norigin\thttps://github.com/user/repo.git\t(push)"
+                ),  # remote -v
                 create_mock_process(" M file.py"),  # status --porcelain
             ]
 
-            result = await git_client.get_repository_info(temp_repo_path, ctx=mock_context)
+            result = await git_client.get_repository_info(
+                temp_repo_path, ctx=mock_context
+            )
 
             assert result["is_bare"] is False
             assert result["is_dirty"] is True
@@ -716,22 +810,27 @@ index 1234567..abcdefg 100644
             mock_context.debug.assert_called()
 
     @pytest.mark.asyncio
-    async def test_get_repository_info_bare_repo(self, git_client, temp_repo_path, mock_context):
+    async def test_get_repository_info_bare_repo(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test repository info for bare repository."""
+
         def create_mock_process(output, returncode=0):
             mock_process = Mock()
             mock_process.returncode = returncode
             mock_process.communicate = AsyncMock(return_value=(output.encode(), b""))
             return mock_process
 
-        with patch('asyncio.create_subprocess_exec') as mock_exec:
+        with patch("asyncio.create_subprocess_exec") as mock_exec:
             mock_exec.side_effect = [
                 create_mock_process("true"),  # is-bare-repository (success = bare)
                 create_mock_process(""),  # no remotes
                 create_mock_process(""),  # clean status
             ]
 
-            result = await git_client.get_repository_info(temp_repo_path, ctx=mock_context)
+            result = await git_client.get_repository_info(
+                temp_repo_path, ctx=mock_context
+            )
 
             assert result["is_bare"] is True
             assert result["is_dirty"] is False
@@ -739,22 +838,29 @@ index 1234567..abcdefg 100644
             assert result["root_path"] == str(temp_repo_path)
 
     @pytest.mark.asyncio
-    async def test_get_repository_info_no_remotes(self, git_client, temp_repo_path, mock_context):
+    async def test_get_repository_info_no_remotes(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test repository info when no remotes are configured."""
+
         def create_mock_process(output, returncode=0):
             mock_process = Mock()
             mock_process.returncode = returncode
             mock_process.communicate = AsyncMock(return_value=(output.encode(), b""))
             return mock_process
 
-        with patch('asyncio.create_subprocess_exec') as mock_exec:
+        with patch("asyncio.create_subprocess_exec") as mock_exec:
             mock_exec.side_effect = [
-                create_mock_process("false", returncode=1),  # is-bare-repository (fails = non-bare)
+                create_mock_process(
+                    "false", returncode=1
+                ),  # is-bare-repository (fails = non-bare)
                 create_mock_process("", returncode=1),  # remote -v fails
                 create_mock_process(""),  # clean status
             ]
 
-            result = await git_client.get_repository_info(temp_repo_path, ctx=mock_context)
+            result = await git_client.get_repository_info(
+                temp_repo_path, ctx=mock_context
+            )
 
             assert result["is_bare"] is False
             assert result["is_dirty"] is False
@@ -763,10 +869,16 @@ index 1234567..abcdefg 100644
             mock_context.debug.assert_called()
 
     @pytest.mark.asyncio
-    async def test_get_repository_info_exception_handling(self, git_client, temp_repo_path, mock_context):
+    async def test_get_repository_info_exception_handling(
+        self, git_client, temp_repo_path, mock_context
+    ):
         """Test repository info exception handling."""
-        with patch('asyncio.create_subprocess_exec', side_effect=RuntimeError("Test error")):
-            result = await git_client.get_repository_info(temp_repo_path, ctx=mock_context)
+        with patch(
+            "asyncio.create_subprocess_exec", side_effect=RuntimeError("Test error")
+        ):
+            result = await git_client.get_repository_info(
+                temp_repo_path, ctx=mock_context
+            )
 
             assert result["is_bare"] is False
             assert result["is_dirty"] is False
@@ -781,9 +893,10 @@ index 1234567..abcdefg 100644
         mock_process = Mock()
         mock_process.communicate = AsyncMock(side_effect=asyncio.TimeoutError())
 
-        with patch('asyncio.create_subprocess_exec', return_value=mock_process):
-            with pytest.raises(GitCommandError):
-                await git_client.execute_command(temp_repo_path, ["status"])
+        with patch(
+            "asyncio.create_subprocess_exec", return_value=mock_process
+        ), pytest.raises(GitCommandError):
+            await git_client.execute_command(temp_repo_path, ["status"])
 
     @pytest.mark.asyncio
     async def test_context_logging(self, git_client, temp_repo_path, mock_context):
@@ -792,7 +905,7 @@ index 1234567..abcdefg 100644
         mock_process.returncode = 0
         mock_process.communicate = AsyncMock(return_value=(b"test output\n", b""))
 
-        with patch('asyncio.create_subprocess_exec', return_value=mock_process):
+        with patch("asyncio.create_subprocess_exec", return_value=mock_process):
             result = await git_client.execute_command(
                 temp_repo_path, ["log", "--oneline", "-1"], ctx=mock_context
             )
@@ -813,10 +926,13 @@ index 1234567..abcdefg 100644
         mock_process.returncode = 0
         mock_process.communicate = AsyncMock(return_value=(binary_output, b""))
 
-        with patch('asyncio.create_subprocess_exec', return_value=mock_process):
+        with patch(
+            "asyncio.create_subprocess_exec", return_value=mock_process
+        ), pytest.raises(GitCommandError):
             # Should raise GitCommandError due to decode failure
-            with pytest.raises(GitCommandError):
-                await git_client.execute_command(temp_repo_path, ["show", "HEAD:binary.file"])
+            await git_client.execute_command(
+                temp_repo_path, ["show", "HEAD:binary.file"]
+            )
 
     @pytest.mark.asyncio
     async def test_large_output_handling(self, git_client, temp_repo_path):
@@ -827,10 +943,12 @@ index 1234567..abcdefg 100644
         mock_process.returncode = 0
         mock_process.communicate = AsyncMock(return_value=(large_output.encode(), b""))
 
-        with patch('asyncio.create_subprocess_exec', return_value=mock_process):
-            result = await git_client.execute_command(temp_repo_path, ["log", "--oneline"])
+        with patch("asyncio.create_subprocess_exec", return_value=mock_process):
+            result = await git_client.execute_command(
+                temp_repo_path, ["log", "--oneline"]
+            )
 
-            assert len(result.split('\n')) > 5000  # Should handle large output
+            assert len(result.split("\n")) > 5000  # Should handle large output
             assert result.endswith("line")  # Should preserve content
 
 
@@ -845,14 +963,23 @@ class TestGitClientIntegration:
         pytest.importorskip("subprocess")
 
         import subprocess
+
         repo_path = tmp_path / "test_repo"
         repo_path.mkdir()
 
         try:
             # Initialize git repo
-            subprocess.run(["git", "init"], cwd=repo_path, check=True, capture_output=True)
-            subprocess.run(["git", "config", "user.email", "test@test.com"], cwd=repo_path, check=True)
-            subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo_path, check=True)
+            subprocess.run(
+                ["git", "init"], cwd=repo_path, check=True, capture_output=True
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "test@test.com"],
+                cwd=repo_path,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.name", "Test User"], cwd=repo_path, check=True
+            )
 
             # Test status on clean repo
             result = await git_client.get_status(repo_path)
