@@ -183,7 +183,7 @@ class GitClient:
         self,
         repo_path: Path,
         staged: bool = False,
-        file_path: Optional[str] = None,
+        file_path: str | None = None,
         ctx: Optional["Context"] = None,
     ) -> str:
         """Get diff output."""
@@ -210,7 +210,7 @@ class GitClient:
         self,
         repo_path: Path,
         file_path: str,
-        staged: Optional[bool] = None,
+        staged: bool | None = None,
         ctx: Optional["Context"] = None,
     ) -> dict[str, Any]:
         """Get diff statistics for a specific file.

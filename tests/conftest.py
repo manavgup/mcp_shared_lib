@@ -11,7 +11,7 @@ import tempfile
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 from unittest.mock import Mock
 
 import pytest
@@ -340,7 +340,7 @@ def create_test_files():
     """Create a factory fixture for creating test files in a directory."""
 
     def _create_files(
-        base_dir: Path, file_structure: dict[str, Union[str, bytes, dict]]
+        base_dir: Path, file_structure: dict[str, str | bytes | dict]
     ):
         """Create files and directories based on a nested dictionary structure.
 
@@ -542,14 +542,14 @@ else:
 
 
 # Utility functions for tests
-def assert_file_exists(file_path: Path, message: Optional[str] = None):
+def assert_file_exists(file_path: Path, message: str | None = None):
     """Assert that a file exists with optional custom message."""
     if message is None:
         message = f"Expected file {file_path} to exist"
     assert file_path.exists() and file_path.is_file(), message
 
 
-def assert_dir_exists(dir_path: Path, message: Optional[str] = None):
+def assert_dir_exists(dir_path: Path, message: str | None = None):
     """Assert that a directory exists with optional custom message."""
     if message is None:
         message = f"Expected directory {dir_path} to exist"
@@ -557,7 +557,7 @@ def assert_dir_exists(dir_path: Path, message: Optional[str] = None):
 
 
 def assert_file_content_contains(
-    file_path: Path, content: str, message: Optional[str] = None
+    file_path: Path, content: str, message: str | None = None
 ):
     """Assert that a file contains specific content."""
     if message is None:
@@ -568,7 +568,7 @@ def assert_file_content_contains(
 
 
 def create_mock_tool_result(
-    status: str = "success", data: Any = None, error: Optional[str] = None
+    status: str = "success", data: Any = None, error: str | None = None
 ):
     """Create a standardized mock tool result."""
     result = {"status": status}

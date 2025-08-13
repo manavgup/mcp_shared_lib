@@ -2,6 +2,9 @@ import asyncio
 
 import pytest
 
+# Treat all tests in this module as unit tests
+pytestmark = pytest.mark.unit
+
 from mcp_shared_lib.models.base.types import LogLevel
 from mcp_shared_lib.utils import logging_service
 
