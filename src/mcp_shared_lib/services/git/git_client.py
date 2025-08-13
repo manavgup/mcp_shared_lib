@@ -1,9 +1,10 @@
 """Git command execution client with error handling."""
+from __future__ import annotations
 
 import asyncio
 import json
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from mcp_shared_lib.config.git_analyzer import GitAnalyzerSettings
 from mcp_shared_lib.utils import logging_service
@@ -36,7 +37,7 @@ class GitClient:
         repo_path: Path,
         command: list[str],
         check: bool = True,
-        ctx: Optional["Context"] = None,
+        ctx: Context | None = None,
     ) -> str:
         """Execute a git command in the given repository."""
         full_command = ["git", "-C", str(repo_path)] + command
@@ -81,7 +82,7 @@ class GitClient:
             raise GitCommandError(full_command, -1, str(e)) from e
 
     async def get_status(
-        self, repo_path: Path, ctx: Optional["Context"] = None
+        self, repo_path: Path, ctx: Context | None = None
     ) -> dict[str, Any]:
         """Get git status information."""
         if ctx:
@@ -184,7 +185,7 @@ class GitClient:
         repo_path: Path,
         staged: bool = False,
         file_path: str | None = None,
-        ctx: Optional["Context"] = None,
+        ctx: Context | None = None,
     ) -> str:
         """Get diff output."""
         command = ["diff"]
@@ -211,7 +212,7 @@ class GitClient:
         repo_path: Path,
         file_path: str,
         staged: bool | None = None,
-        ctx: Optional["Context"] = None,
+        ctx: Context | None = None,
     ) -> dict[str, Any]:
         """Get diff statistics for a specific file.
 
@@ -367,7 +368,7 @@ class GitClient:
             return {"lines_added": 0, "lines_deleted": 0, "is_binary": False}
 
     async def get_unpushed_commits(
-        self, repo_path: Path, remote: str = "origin", ctx: Optional["Context"] = None
+        self, repo_path: Path, remote: str = "origin", ctx: Context | None = None
     ) -> list[dict[str, Any]]:
         """Get commits that haven't been pushed to remote."""
         if ctx:
@@ -428,7 +429,7 @@ class GitClient:
             return []
 
     async def get_stash_list(
-        self, repo_path: Path, ctx: Optional["Context"] = None
+        self, repo_path: Path, ctx: Context | None = None
     ) -> list[dict[str, Any]]:
         """Get list of stashed changes."""
         if ctx:
@@ -464,7 +465,7 @@ class GitClient:
             return []
 
     async def get_branch_info(
-        self, repo_path: Path, ctx: Optional["Context"] = None
+        self, repo_path: Path, ctx: Context | None = None
     ) -> dict[str, Any]:
         """Get branch information."""
         if ctx:
@@ -543,7 +544,7 @@ class GitClient:
             }
 
     async def get_repository_info(
-        self, repo_path: Path, ctx: Optional["Context"] = None
+        self, repo_path: Path, ctx: Context | None = None
     ) -> dict[str, Any]:
         """Get general repository information."""
         if ctx:

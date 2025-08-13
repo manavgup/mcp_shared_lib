@@ -3,6 +3,7 @@
 This module provides common fixtures and utilities that can be used across
 all MCP projects (shared_lib, local_repo_analyzer, pr_recommender).
 """
+from __future__ import annotations
 
 import json
 import os

@@ -3,6 +3,7 @@
 This module provides factories for creating realistic test scenarios,
 workflow states, and integration test data.
 """
+from __future__ import annotations
 
 from datetime import datetime
 from typing import Any, TypeVar

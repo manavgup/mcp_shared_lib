@@ -8,6 +8,7 @@ This module implements structured logging according to the MCP specification.
 It supports RFC 5424 severity levels, log level management, and log event
 subscriptions.
 """
+from __future__ import annotations
 
 import asyncio
 import logging

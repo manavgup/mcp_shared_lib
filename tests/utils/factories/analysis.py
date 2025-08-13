@@ -3,6 +3,7 @@
 This module provides factories for creating realistic analysis results,
 risk assessments, quality metrics, and performance data.
 """
+from __future__ import annotations
 
 import random
 from datetime import datetime, timedelta

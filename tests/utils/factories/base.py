@@ -3,6 +3,7 @@
 This module provides the foundation for all other factories, including
 a simple Faker implementation and base factory class.
 """
+from __future__ import annotations
 
 import random
 import uuid

@@ -3,6 +3,7 @@
 This module provides factories for creating realistic PR recommendations
 and recommendation-related objects.
 """
+from __future__ import annotations
 
 import random
 from datetime import datetime

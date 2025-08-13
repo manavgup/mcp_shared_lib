@@ -3,6 +3,7 @@
 This module provides factories for creating realistic file changes,
 file metadata, and file-related objects.
 """
+from __future__ import annotations
 
 import random
 from datetime import datetime, timedelta
