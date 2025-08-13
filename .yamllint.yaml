@@ -12,3 +12,15 @@ rules:
   document-start: disable
   truthy: disable
   brackets: disable
+
+# Exclude directories that shouldn't be linted
+exclude:
+  - .venv/
+  - node_modules/
+  - dist/
+  - build/
+  - .git/
+  - .mypy_cache/
+  - .pytest_cache/
+  - htmlcov/
+  - .ruff_cache/
