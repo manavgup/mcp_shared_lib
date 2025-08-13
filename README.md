@@ -1,6 +1,6 @@
 # MCP Shared Library
 
-Shared models and services for MCP (Model Context Protocol) components.
+Shared models and services for MCP (Model Context Protocol) components. Compatible with Python 3.10+.
 
 ## Overview
 
