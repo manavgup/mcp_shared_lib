@@ -224,7 +224,7 @@ def mock_mcp_server():
     ]
 
     # Mock tool execution
-    def mock_execute_tool(tool_name: str, params: dict[str, Any]):
+    def mock_execute_tool(tool_name: str, _params: dict[str, Any]):
         if tool_name == "analyze_changes":
             return {
                 "status": "success",
