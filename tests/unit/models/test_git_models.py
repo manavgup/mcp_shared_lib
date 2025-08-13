@@ -5,14 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from mcp_shared_lib.models.git.files import (
-    FileStatus,
-)
-from mcp_shared_lib.models.git.repository import (
-    GitBranch,
-    GitRemote,
-    LocalRepository,
-)
+from mcp_shared_lib.models.git.files import FileStatus
+from mcp_shared_lib.models.git.repository import GitBranch, GitRemote, LocalRepository
 
 
 @pytest.mark.unit

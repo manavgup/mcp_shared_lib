@@ -1,6 +1,7 @@
+---
 name: Release
 
-on:
+'on':
   workflow_dispatch:
     inputs:
       version_type:
@@ -9,10 +10,10 @@ on:
         default: 'patch'
         type: choice
         options:
-        - patch
-        - minor
-        - major
-        - prerelease
+          - patch
+          - minor
+          - major
+          - prerelease
   push:
     branches:
       - main

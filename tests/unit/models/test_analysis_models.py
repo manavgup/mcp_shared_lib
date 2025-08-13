@@ -5,16 +5,9 @@ from pathlib import Path
 
 import pytest
 
-from mcp_shared_lib.models.analysis.categorization import (
-    ChangeCategorization,
-)
-from mcp_shared_lib.models.analysis.repository import (
-    BranchStatus,
-    RepositoryStatus,
-)
-from mcp_shared_lib.models.analysis.risk import (
-    RiskAssessment,
-)
+from mcp_shared_lib.models.analysis.categorization import ChangeCategorization
+from mcp_shared_lib.models.analysis.repository import BranchStatus, RepositoryStatus
+from mcp_shared_lib.models.analysis.risk import RiskAssessment
 from mcp_shared_lib.models.git.changes import StagedChanges, WorkingDirectoryChanges
 from mcp_shared_lib.models.git.commits import UnpushedCommit
 from mcp_shared_lib.models.git.files import FileStatus
