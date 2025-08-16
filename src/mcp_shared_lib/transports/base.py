@@ -2,7 +2,7 @@
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any
 
 from fastmcp import FastMCP
 
@@ -39,7 +39,7 @@ class BaseTransport(ABC):
         self._setup_logging()
 
         # Server instance will be set when running
-        self.server: Optional[FastMCP] = None
+        self.server: FastMCP | None = None
         self._is_running = False
 
     def _setup_logging(self) -> None:
@@ -137,7 +137,7 @@ class HttpBasedTransport(BaseTransport):
     def __init__(self, config: TransportConfig, server_name: str = "MCP Server"):
         """Initialize HTTP-based transport."""
         super().__init__(config, server_name)
-        self._server_process: Optional[Any] = None
+        self._server_process: Any | None = None
 
     def get_connection_info(self) -> dict[str, Any]:
         """Get HTTP connection information."""
@@ -179,7 +179,7 @@ class HttpBasedTransport(BaseTransport):
         if (
             transport_config
             and hasattr(transport_config, "cors_origins")
-            and isinstance(transport_config, (HTTPConfig, SSEConfig))
+            and isinstance(transport_config, HTTPConfig | SSEConfig)
         ):
             self.logger.debug(f"CORS origins: {transport_config.cors_origins}")
             # Note: Actual CORS implementation would depend on FastMCP's capabilities

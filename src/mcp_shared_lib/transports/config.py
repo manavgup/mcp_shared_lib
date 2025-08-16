@@ -1,7 +1,6 @@
 """Transport configuration models and utilities."""
 
 import os
-from typing import Optional
 
 import yaml  # type: ignore[import-untyped]
 from pydantic import BaseModel, Field
@@ -12,7 +11,7 @@ class HTTPConfig(BaseModel):
 
     host: str = Field(default="0.0.0.0")
     port: int = Field(default=8000)
-    cors_origins: Optional[list[str]] = Field(default_factory=lambda: ["*"])
+    cors_origins: list[str] | None = Field(default_factory=lambda: ["*"])
     enable_health_check: bool = Field(default=True)
     health_check_path: str = Field(default="/health")
 
@@ -30,7 +29,7 @@ class SSEConfig(BaseModel):
 
     host: str = Field(default="0.0.0.0")
     port: int = Field(default=8003)
-    cors_origins: Optional[list[str]] = Field(default_factory=lambda: ["*"])
+    cors_origins: list[str] | None = Field(default_factory=lambda: ["*"])
     enable_health_check: bool = Field(default=True)
     health_check_path: str = Field(default="/healthz")
 
@@ -48,9 +47,9 @@ class TransportConfig(BaseModel):
     """Base transport config."""
 
     type: str = Field(default="stdio")  # stdio, http, websocket, sse
-    http: Optional[HTTPConfig] = None
-    websocket: Optional[WebSocketConfig] = None
-    sse: Optional[SSEConfig] = None
+    http: HTTPConfig | None = None
+    websocket: WebSocketConfig | None = None
+    sse: SSEConfig | None = None
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
 
     def get_transport_config(self) -> BaseModel | None:

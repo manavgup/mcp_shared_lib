@@ -8,12 +8,13 @@ This module implements structured logging according to the MCP specification.
 It supports RFC 5424 severity levels, log level management, and log event
 subscriptions.
 """
+from __future__ import annotations
 
 import asyncio
 import logging
 from collections.abc import AsyncGenerator
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
 from mcp_shared_lib.models.base.types import LogLevel
 
@@ -88,7 +89,7 @@ class LoggingService:
         await self.notify(f"Log level set to {level}", LogLevel.INFO, "logging")
 
     async def notify(
-        self, data: Any, level: LogLevel, logger_name: Optional[str] = None
+        self, data: Any, level: LogLevel, logger_name: str | None = None
     ) -> None:
         """Send log notification to subscribers.
 

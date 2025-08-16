@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2025-01-27
+
+### Changed
+- Bumped version to 0.1.1 for stable release
+- Enhanced package metadata and classifiers
+- Improved transport layer stability
+
+### Fixed
+- Various minor bug fixes and improvements
+
 ## [0.2.0] - 2025-08-07
 
 ### Added

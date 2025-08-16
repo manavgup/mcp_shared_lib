@@ -9,6 +9,7 @@ URL parsing, file size formatting, commit message formatting, safe filename
 generation, diff stats parsing, text truncation, path normalization, file
 extension extraction, and binary file detection.
 """
+from __future__ import annotations
 
 import re
 from pathlib import Path

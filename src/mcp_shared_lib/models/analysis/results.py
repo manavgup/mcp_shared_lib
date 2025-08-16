@@ -7,6 +7,7 @@ Author: Manav Gupta <manavg@gmail.com>
 This module defines data models for analysis results including branch status,
 change categorization, risk assessment, repository status, and outstanding changes analysis.
 """
+from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
